@@ -2,7 +2,7 @@
     Footer START -->
 <footer class="pt-0 bg-blue rounded-4 position-relative mx-2 mx-md-4 mb-3">
     <!-- SVG decoration for curve -->
-    <figure class="mb-0">
+    <figure class="mb-0 d-lg-block d-none">
         <svg class="fill-body rotate-180" width="100%" height="150" viewBox="0 0 500 150" preserveAspectRatio="none">
             <path d="M0,150 L0,40 Q250,150 500,40 L580,150 Z"></path>
         </svg>

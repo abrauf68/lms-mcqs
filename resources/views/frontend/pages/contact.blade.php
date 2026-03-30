@@ -327,7 +327,8 @@
                         <h3 class="mb-3 text-white">Fill out the form below</h3>
 
                         <!-- Form START -->
-                        <form class="row g-3 position-relative">
+                        <form action="{{ route('frontend.contact.submit') }}" class="row g-3 position-relative" method="POST">
+                            @csrf
                             <!-- First name -->
                             <div class="col-md-6 bg-dark-input">
                                 <label class="form-label text-white text-opacity-50">First name <span
@@ -353,7 +354,7 @@
                             <div class="col-md-6 bg-dark-input">
                                 <label class="form-label text-white text-opacity-50">Phone number <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="phoneNumber" name="phone_number">
+                                <input type="text" class="form-control" id="phoneNumber" name="phone">
                             </div>
 
 
@@ -397,7 +398,7 @@
                             <!-- Button -->
                             <div class="col-12 bg-dark-input">
                                 <div class="d-grid">
-                                    <button class="btn btn-lg btn-primary">Request a demo</button>
+                                    <button class="btn btn-lg btn-primary">Submit</button>
                                 </div>
                                 <p class="mb-0 text-white text-opacity-50 small">Field required with <span
                                         class="text-danger fw-bold">*</span> are required to complete the demo request</p>

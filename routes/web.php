@@ -146,6 +146,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::name('frontend.')->group(function () {
     Route::get('/', [FrontendHomeController::class, 'home'])->name('home');
     Route::get('/contact-us', [FrontendHomeController::class, 'contact'])->name('contact');
+    Route::post('/contact/submit', [FrontendHomeController::class, 'contactSubmit'])->name('contact.submit');
+    Route::get('/thank-you', [FrontendHomeController::class, 'thankYou'])->name('thank.you');
 });
 
 
