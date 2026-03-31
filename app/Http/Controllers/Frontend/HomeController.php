@@ -134,11 +134,9 @@ class HomeController extends Controller
                 $profile->user_id = $user->id;
                 $profile->first_name = $request->name;
                 $profile->save();
-
-                Auth::login($user);
-            }else{
-                Auth::login($user);
             }
+            
+            Auth::login($user);
 
 
             $userExam = UserExam::where('user_id', $user->id)->where('exam_id', $exam->id)->where('status', 'not_started')->first();
