@@ -10,8 +10,6 @@
 
 <body>
 
-    @include('frontend.layouts.header')
-
     <!-- **************** MAIN CONTENT START **************** -->
     <main>
 
@@ -19,8 +17,6 @@
 
     </main>
     <!-- **************** MAIN CONTENT END **************** -->
-
-    @include('frontend.layouts.footer')
 
     <!-- Bootstrap JS -->
     @include('frontend.layouts.script')

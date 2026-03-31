@@ -154,7 +154,7 @@
                         </ul>
                     </div> --}}
                     <div class="navbar-nav ms-2 m-3">
-                        <button class="btn btn-sm btn-outline-dark mb-0"><i class="bi bi-play-circle me-2"></i> Try Demo</button>
+                        <a class="btn btn-sm btn-outline-dark mb-0" href="{{ route('frontend.try.demo') }}"><i class="bi bi-play-circle me-2"></i> Try Demo</a>
                     </div>
                     @if (Auth::user())
                         <!-- Profile START -->

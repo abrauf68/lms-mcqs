@@ -37,9 +37,9 @@ use Illuminate\Support\Facades\Session;
 
 Route::get('/lang/{lang}', function ($lang) {
     // dd($lang);
-    if(! in_array($lang, ['en','fr','ar','de'])){
+    if (! in_array($lang, ['en', 'fr', 'ar', 'de'])) {
         abort(404);
-    }else{
+    } else {
         session(['locale' => $lang]);
         App::setLocale($lang);
         Log::info("Locale set to: " . $lang);
@@ -139,7 +139,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         });
     });
-
 });
 
 // Frontend Pages Routes
@@ -148,6 +147,15 @@ Route::name('frontend.')->group(function () {
     Route::get('/contact-us', [FrontendHomeController::class, 'contact'])->name('contact');
     Route::post('/contact/submit', [FrontendHomeController::class, 'contactSubmit'])->name('contact.submit');
     Route::get('/thank-you', [FrontendHomeController::class, 'thankYou'])->name('thank.you');
+    Route::get('/try-demo', [FrontendHomeController::class, 'tryDemo'])->name('try.demo');
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/submit-demo', [FrontendHomeController::class, 'submitDemo'])->name('submit.demo');
+        Route::get('/exam/{exam_slug}/{question_id}', [FrontendHomeController::class, 'exam'])->name('exam');
+        Route::get('/mark-for-review/{question_id}', [FrontendHomeController::class, 'markForReview'])->name('mark.for.review');
+        Route::post('/single-choice/submit', [FrontendHomeController::class, 'submitSingleChoice'])->name('single-choice.submit');
+        Route::post('/multi-choice/submit', [FrontendHomeController::class, 'submitMultiChoice'])->name('multi-choice.submit');
+        Route::post('/score/submit', [FrontendHomeController::class, 'scoreChoice'])->name('score.submit');
+    });
 });
 
 
@@ -178,4 +186,3 @@ Route::middleware(['auth'])->group(function () {
         return "Optimization cache cleared!";
     })->name('clear.optimize');
 });
-
