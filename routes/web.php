@@ -148,8 +148,8 @@ Route::name('frontend.')->group(function () {
     Route::post('/contact/submit', [FrontendHomeController::class, 'contactSubmit'])->name('contact.submit');
     Route::get('/thank-you', [FrontendHomeController::class, 'thankYou'])->name('thank.you');
     Route::get('/try-demo', [FrontendHomeController::class, 'tryDemo'])->name('try.demo');
+    Route::post('/submit-demo', [FrontendHomeController::class, 'submitDemo'])->name('submit.demo');
     Route::middleware(['auth'])->group(function () {
-        Route::post('/submit-demo', [FrontendHomeController::class, 'submitDemo'])->name('submit.demo');
         Route::get('/exam/{exam_slug}/{question_id}', [FrontendHomeController::class, 'exam'])->name('exam');
         Route::get('/mark-for-review/{question_id}', [FrontendHomeController::class, 'markForReview'])->name('mark.for.review');
         Route::post('/single-choice/submit', [FrontendHomeController::class, 'submitSingleChoice'])->name('single-choice.submit');

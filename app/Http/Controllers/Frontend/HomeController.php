@@ -116,28 +116,24 @@ class HomeController extends Controller
 
             $user = User::where('email', $request->email)->first();
             if (!$user) {
-                try {
-                    $user = new User();
-                    $user->name = $request->name;
-                    $user->email = $request->email;
-                    $user->password = Hash::make('password');
+                $user = new User();
+                $user->name = $request->name;
+                $user->email = $request->email;
+                $user->password = Hash::make('password');
+                $username = $this->generateUsername($request->name);
+
+                while (User::where('username', $username)->exists()) {
                     $username = $this->generateUsername($request->name);
-
-                    while (User::where('username', $username)->exists()) {
-                        $username = $this->generateUsername($request->name);
-                    }
-                    $user->username = $username;
-                    $user->save();
-
-                    $user->syncRoles('user');
-
-                    $profile = new Profile();
-                    $profile->user_id = $user->id;
-                    $profile->first_name = $request->name;
-                    $profile->save();
-                } catch (\Throwable $th) {
-                    Log::error('Error creating new user with email: ' . $th->getMessage());
                 }
+                $user->username = $username;
+                $user->save();
+
+                $user->syncRoles('user');
+
+                $profile = new Profile();
+                $profile->user_id = $user->id;
+                $profile->first_name = $request->name;
+                $profile->save();
             }
 
             Auth::login($user);
