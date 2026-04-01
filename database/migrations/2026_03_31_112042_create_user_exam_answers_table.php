@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('exam_id')->constrained('exams')->cascadeOnDelete();
+            $table->foreignId('user_exam_id')->constrained('user_exams')->cascadeOnDelete();
             $table->foreignId('question_id')->constrained('questions')->cascadeOnDelete();
             $table->integer('question_order')->default(0);
             $table->text('answer_text')->nullable(); // fill blank
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->enum('is_marked', ['1', '0'])->default('0');
             $table->enum('is_answered', ['1', '0'])->default('0');
             $table->enum('is_correct', ['1', '0'])->default('0');
+            $table->json('annotations')->nullable();
             $table->timestamps();
         });
     }

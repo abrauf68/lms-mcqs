@@ -154,7 +154,12 @@ Route::name('frontend.')->group(function () {
         Route::get('/mark-for-review/{question_id}', [FrontendHomeController::class, 'markForReview'])->name('mark.for.review');
         Route::post('/single-choice/submit', [FrontendHomeController::class, 'submitSingleChoice'])->name('single-choice.submit');
         Route::post('/multi-choice/submit', [FrontendHomeController::class, 'submitMultiChoice'])->name('multi-choice.submit');
-        Route::post('/score/submit', [FrontendHomeController::class, 'scoreChoice'])->name('score.submit');
+        Route::post('/matching/submit', [FrontendHomeController::class, 'submitMatching'])->name('matching.submit');
+        Route::post('/fill-blank/submit', [FrontendHomeController::class, 'submitFillBlank'])->name('fill-blank.submit');
+        Route::post('/hotspot/submit', [FrontendHomeController::class, 'submitHotspot'])->name('hotspot.submit');
+        Route::post('/annotation/submit', [FrontendHomeController::class, 'submitAnnotation'])->name('annotation.submit');
+        Route::post('/score/submit', [FrontendHomeController::class, 'scoreSubmit'])->name('score.submit');
+        Route::get('/stats/exam/{exam_id}', [FrontendHomeController::class, 'examStat'])->name('exam.stat');
     });
 });
 

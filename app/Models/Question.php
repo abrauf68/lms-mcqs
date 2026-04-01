@@ -14,7 +14,7 @@ class Question extends Model
         return $this->hasMany(Option::class);
     }
 
-    public function fillBlanks()
+    public function fillBlank()
     {
         return $this->hasOne(FillBlank::class);
     }

@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
+use App\Models\FillBlank;
+use App\Models\Hotspot;
+use App\Models\MatchPair;
+use App\Models\Option;
 use App\Models\Product;
 use App\Models\Profile;
 use App\Models\User;
@@ -60,7 +64,7 @@ class HomeController extends Controller
         try {
 
             $contact = new Contact();
-            $contact->name = $request->first_name.' '.$request->last_name;
+            $contact->name = $request->first_name . ' ' . $request->last_name;
             $contact->email = $request->email;
             $contact->phone = $request->phone;
             $contact->interest = $request->interest;
@@ -158,6 +162,7 @@ class HomeController extends Controller
                     $userExamquestion = new UserExamAnswer();
                     $userExamquestion->user_id = $user->id;
                     $userExamquestion->exam_id = $exam->id;
+                    $userExamquestion->user_exam_id = $userExam->id;
                     $userExamquestion->question_id = $question->question_id;
                     $userExamquestion->question_order = $question->question_order;
                     $userExamquestion->save();
@@ -185,9 +190,9 @@ class HomeController extends Controller
 
             $userExamQuestions = UserExamAnswer::with('question')->where('user_id', Auth::id())->where('exam_id', $exam->id)->get();
 
-            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlanks', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('question_id', $question_id)->first();
+            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('question_id', $question_id)->first();
 
-            // dd($userExamQuestions);
+            // dd($currentQuestion);
             return view('frontend.pages.exams.index', compact('exam', 'currentQuestion', 'userExamQuestions'));
         } catch (\Throwable $th) {
             Log::error('Exam Page Failed', ['error' => $th->getMessage()]);
@@ -274,10 +279,297 @@ class HomeController extends Controller
                 'exam_slug' => $exam->slug,
                 'question_id' => $currentQuestion->question_id
             ]);
-
         } catch (\Throwable $th) {
             Log::error('Multi Choice Error: ' . $th->getMessage());
             return redirect()->back()->with('error', 'Something went wrong!');
+        }
+    }
+
+    public function submitMatching(Request $request)
+    {
+        // dd($request->all());
+        $validator = Validator::make($request->all(), [
+            'user_exam_answer_id' => 'required|exists:user_exam_answers,id',
+            'matches' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            $currentQuestion = UserExamAnswer::findOrFail($request->user_exam_answer_id);
+
+            // ✅ decode JSON
+            $matches = json_decode($request->matches, true);
+
+            $currentQuestion->matched_pairs = json_encode($matches);
+            $currentQuestion->is_answered = 1;
+            $currentQuestion->save();
+
+            $exam = Exam::find($currentQuestion->exam_id);
+
+            return redirect()->route('frontend.exam', [
+                'exam_slug' => $exam->slug,
+                'question_id' => $currentQuestion->question_id
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Matching Error: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong!');
+        }
+    }
+
+    public function submitFillBlank(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_exam_answer_id' => 'required|exists:user_exam_answers,id',
+            'answer_text' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            $currentQuestion = UserExamAnswer::findOrFail($request->user_exam_answer_id);
+
+            $currentQuestion->answer_text = $request->answer_text;
+            $currentQuestion->is_answered = 1;
+            $currentQuestion->save();
+
+            $exam = Exam::find($currentQuestion->exam_id);
+
+            return redirect()->route('frontend.exam', [
+                'exam_slug' => $exam->slug,
+                'question_id' => $currentQuestion->question_id
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Fill Blank Error: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong!');
+        }
+    }
+
+    public function submitHotspot(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_exam_answer_id' => 'required|exists:user_exam_answers,id',
+            'hotspot' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            $currentQuestion = UserExamAnswer::findOrFail($request->user_exam_answer_id);
+
+            $currentQuestion->hotspot = $request->hotspot;
+            $currentQuestion->is_answered = 1;
+            $currentQuestion->save();
+
+            $exam = Exam::find($currentQuestion->exam_id);
+
+            return redirect()->route('frontend.exam', [
+                'exam_slug' => $exam->slug,
+                'question_id' => $currentQuestion->question_id
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Hotspot Error: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong!');
+        }
+    }
+
+    public function submitAnnotation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_exam_answer_id' => 'required|exists:user_exam_answers,id',
+            'annotations' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            $answer = UserExamAnswer::findOrFail($request->user_exam_answer_id);
+
+            $answer->annotations = json_encode($request->annotations);
+            $answer->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $th) {
+            Log::error('Annotation Error: ' . $th->getMessage());
+            return response()->json(['error' => true], 500);
+        }
+    }
+
+    public function scoreSubmit(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_exam_id' => 'required|exists:user_exams,id',
+            'time_taken' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            $userExam = UserExam::findOrFail($request->user_exam_id);
+
+            $answers = UserExamAnswer::with('question')->where('user_exam_id', $userExam->id)->get();
+
+            $correctCount = 0;
+
+            foreach ($answers as $answer) {
+
+                $question = $answer->question;
+                $isCorrect = 0;
+
+                // ✅ SINGLE CHOICE
+                if ($question->type === 'single_choice') {
+
+                    $correctOption = Option::where('question_id', $question->id)
+                        ->where('is_correct', '1')
+                        ->value('id');
+
+                    if ($answer->selected_option_id == $correctOption) {
+                        $isCorrect = 1;
+                    }
+                }
+
+                // ✅ MULTI CHOICE
+                elseif ($question->type === 'multi_choice') {
+
+                    $correctOptions = Option::where('question_id', $question->id)
+                        ->where('is_correct', '1')
+                        ->pluck('id')
+                        ->toArray();
+
+                    $userOptions = json_decode($answer->selected_options ?? '[]', true);
+
+                    sort($correctOptions);
+                    sort($userOptions);
+
+                    if ($correctOptions == $userOptions) {
+                        $isCorrect = 1;
+                    }
+                }
+
+                // ✅ FILL IN BLANK
+                elseif ($question->type === 'fill_blank') {
+
+                    $correctAnswer = FillBlank::where('question_id', $question->id)
+                        ->value('correct_answer');
+
+                    if (strtolower(trim($answer->answer_text)) == strtolower(trim($correctAnswer))) {
+                        $isCorrect = 1;
+                    }
+                }
+
+                // ✅ MATCHING
+                elseif ($question->type === 'matching') {
+
+                    $correctPairs = MatchPair::where('question_id', $question->id)
+                        ->pluck('right_item', 'left_item') // left => right
+                        ->toArray();
+
+                    $userPairs = json_decode($answer->matched_pairs ?? '[]', true);
+
+                    if ($correctPairs == $userPairs) {
+                        $isCorrect = 1;
+                    }
+                }
+
+                // ✅ HOTSPOT
+                elseif ($question->type === 'hotspot') {
+
+                    $userPoint = json_decode($answer->hotspot ?? '{}', true);
+
+                    if ($userPoint && isset($userPoint['x'], $userPoint['y'])) {
+
+                        $hotspot = Hotspot::where('question_id', $question->id)->first();
+
+                        if ($hotspot) {
+                            $dx = $userPoint['x'] - $hotspot->x;
+                            $dy = $userPoint['y'] - $hotspot->y;
+
+                            $distance = sqrt($dx * $dx + $dy * $dy);
+
+                            if ($distance <= $hotspot->radius) {
+                                $isCorrect = 1;
+                            }
+                        }
+                    }
+                }
+
+                // 🔥 SAVE RESULT PER QUESTION
+                $answer->is_correct = $isCorrect;
+                $answer->is_answered = '1';
+                $answer->save();
+
+                if ($isCorrect) {
+                    $correctCount++;
+                }
+            }
+
+            // 🔥 FINAL CALCULATIONS
+            $totalQuestions = $answers->count();
+            $wrongCount = $totalQuestions - $correctCount;
+
+            $percentage = $totalQuestions > 0
+                ? round(($correctCount / $totalQuestions) * 100)
+                : 0;
+
+            $result = $percentage >= 70 ? 'pass' : 'fail';
+
+            $avgTime = $totalQuestions > 0
+                ? round($request->time_taken / $totalQuestions)
+                : 0;
+
+            // 🔥 SAVE EXAM
+            $userExam->total_time = $request->time_taken;
+            $userExam->avg_time = $avgTime;
+            $userExam->score_percentage = $percentage;
+            $userExam->total_questions = $totalQuestions;
+            $userExam->correct_answers = $correctCount;
+            $userExam->wrong_answers = $wrongCount;
+            $userExam->result = $result;
+            $userExam->status = 'completed';
+            $userExam->save();
+
+            return redirect()->route('frontend.exam.stat', $userExam->exam_id)->with('success', 'Exam scored successfully!');
+        } catch (\Throwable $th) {
+            Log::error('Score Submit Error: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong while calculating the score!');
+        }
+    }
+
+    public function examStat($exam_id)
+    {
+        try {
+            $userExam = UserExam::findOrFail($exam_id);
+            $userExamQuestions = UserExamAnswer::with('question')->where('user_exam_id', $userExam->id)->get();
+            return view('frontend.pages.exams.exam-stat', compact('userExam', 'userExamQuestions'));
+        } catch (\Throwable $th) {
+            Log::error('Exam Stat Page Failed', ['error' => $th->getMessage()]);
+            return redirect()->back()->with('error', "Something went wrong! Please try again later");
+            throw $th;
         }
     }
 

@@ -167,7 +167,7 @@
         /* Modal Compact Boxes */
         .question-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 70px));
+            grid-template-columns: repeat(auto-fill, minmax(40px, 50px));
             gap: 12px;
             justify-content: center;
             padding: 0.5rem 0;
@@ -217,6 +217,7 @@
         .modal-tab-btn {
             border-radius: 2rem;
             padding: 0.5rem 1.2rem;
+            font-size: 13px;
             margin: 0 0.2rem;
             font-weight: 600;
             background: #f1f5f9;
@@ -304,6 +305,15 @@
                 font-size: 0.85rem;
             }
         }
+        .drag-item{
+            cursor: grab;
+            color: #5a5a5a;
+        }
+        @media (max-width: 576px) {
+            .radio-label {
+                font-size: 14px;
+            }
+        }
     </style>
 @endsection
 
@@ -362,8 +372,10 @@
                                     @endif
                                 </div>
                             </div>
-                            <div id="questionTextContainer" class="question-text-area mb-4">
-                                {{ $currentQuestion->question->question_text }}</div>
+                            <div id="questionTextContainer"
+                                class="question-text-area mb-4"
+                                data-original="{{ e($currentQuestion->question->question_text) }}">
+                            </div>
 
                             @if ($currentQuestion->question->type == 'single_choice')
                                 <form id="singleChoiceForm" method="POST"
@@ -399,8 +411,8 @@
                                     <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
                                     <div id="optionsContainer" class="mb-4">
                                         @php
-                                            $selectedOptions = is_array($currentQuestion->selected_options) 
-                                                ? $currentQuestion->selected_options 
+                                            $selectedOptions = is_array($currentQuestion->selected_options)
+                                                ? $currentQuestion->selected_options
                                                 : json_decode($currentQuestion->selected_options, true) ?? [];
                                         @endphp
                                         @foreach ($currentQuestion->question->options as $option)
@@ -419,6 +431,149 @@
                                                 </div>
                                             </div>
                                         @endforeach
+                                    </div>
+                                </form>
+                            @endif
+                            @if ($currentQuestion->question->type == 'matching')
+                                <form id="matchingForm" method="POST" action="{{ route('frontend.matching.submit') }}">
+                                    @csrf
+
+                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
+                                    <input type="hidden" name="matches" id="matchesInput" value="{}">
+
+                                    @php
+                                        $pairs = $currentQuestion->question->matchPairs;
+
+                                        // 🔥 SAFE DECODE
+                                        $savedPairs = json_decode($currentQuestion->matched_pairs ?? '{}', true);
+                                        if (!is_array($savedPairs)) {
+                                            $savedPairs = [];
+                                        }
+
+                                        $allLeftItems = $pairs->pluck('left_item')->toArray();
+                                        $usedLeftItems = array_keys($savedPairs);
+
+                                        // 🔥 LEFT ITEMS (never vanish fix)
+                                        $leftItems = array_diff($allLeftItems, $usedLeftItems);
+                                    @endphp
+
+                                    <div class="row">
+
+                                        {{-- LEFT --}}
+                                        <div class="col-md-4" id="leftContainer">
+                                            <h5 class="text-center">Valued More</h5>
+
+                                            @foreach($leftItems as $item)
+                                                <div class="drag-item p-2 mb-2 border bg-light text-center"
+                                                    draggable="true"
+                                                    data-value="{{ $item }}">
+                                                    {{ $item }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        {{-- DROP ZONES --}}
+                                        <div class="col-md-4">
+
+                                            <h5 class="text-center">&nbsp;</h5>
+
+                                            @foreach($pairs as $pair)
+
+                                                @php
+                                                    $matchedLeft = array_search($pair->right_item, $savedPairs);
+                                                    $matchedLeft = $matchedLeft !== false ? $matchedLeft : null;
+                                                @endphp
+
+                                                <div class="drop-zone mb-2 border text-center {{ $matchedLeft ? 'text-white' : '' }}"
+                                                    data-right="{{ $pair->right_item }}">
+
+                                                    @if($matchedLeft)
+                                                        <div class="drag-item p-2 border bg-light text-center"
+                                                            draggable="true"
+                                                            data-value="{{ $matchedLeft }}">
+                                                            {{ $matchedLeft }}
+                                                        </div>
+                                                    @else
+
+                                                        <span class="placeholder p-2 text-center" style="background: none;">Drop here</span>
+                                                    @endif
+
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        {{-- RIGHT --}}
+                                        <div class="col-md-4">
+                                            <h5 class="text-center">Valued Less</h5>
+
+                                            @foreach($pairs as $pair)
+                                                <div class="p-2 mb-2 border bg-light text-center">
+                                                    {{ $pair->right_item }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                    </div>
+                                </form>
+                            @endif
+                            @if ($currentQuestion->question->type == 'fill_blank')
+                                <form id="fillBlankForm" method="POST" action="{{ route('frontend.fill-blank.submit') }}">
+                                    @csrf
+
+                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
+
+                                    <div class="mb-4">
+                                        <input type="text"
+                                            name="answer_text"
+                                            id="fillBlankInput"
+                                            class="form-control form-control-lg"
+                                            placeholder="Type your answer here..."
+                                            value="{{ $currentQuestion->answer_text ?? '' }}">
+                                    </div>
+
+                                    @if ($currentQuestion->question->fillBlank && $currentQuestion->question->fillBlank->image)
+                                        <img src="{{ asset($currentQuestion->question->fillBlank->image) }}"
+                                            class="img-fluid mb-3">
+                                    @endif
+                                </form>
+                            @endif
+                            @if ($currentQuestion->question->type == 'hotspot')
+                                <form id="hotspotForm" method="POST" action="{{ route('frontend.hotspot.submit') }}">
+                                    @csrf
+
+                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
+                                    <input type="hidden" name="hotspot" id="hotspotInput">
+
+                                    @php
+                                        $savedHotspot = json_decode($currentQuestion->hotspot ?? '{}', true);
+                                        $x = $savedHotspot['x'] ?? null;
+                                        $y = $savedHotspot['y'] ?? null;
+                                    @endphp
+
+                                    <div class="position-relative d-inline-block">
+
+                                        @if ($currentQuestion->question->hotspot && $currentQuestion->question->hotspot->image)
+                                            <img id="hotspotImage"
+                                                src="{{ asset($currentQuestion->question->hotspot->image) }}"
+                                                class="img-fluid mb-3"
+                                                style="cursor: crosshair;">
+                                        @endif
+
+                                        {{-- 🔴 Marker --}}
+                                        <div id="hotspotMarker"
+                                            style="
+                                                position:absolute;
+                                                width:15px;
+                                                height:15px;
+                                                background:red;
+                                                border-radius:50%;
+                                                transform:translate(-50%, -50%);
+                                                display: {{ $x !== null ? 'block' : 'none' }};
+                                                left: {{ $x ?? 0 }}%;
+                                                top: {{ $y ?? 0 }}%;
+                                            ">
+                                        </div>
+
                                     </div>
                                 </form>
                             @endif
@@ -455,11 +610,14 @@
                                             Next <i class="fas fa-chevron-right ms-1"></i>
                                         </a>
                                     @else
-                                        <form action="{{ route('frontend.score.submit') }}" method="POST">
+                                        <form action="{{ route('frontend.score.submit') }}" method="POST" id="submitExamForm">
                                             @csrf
-                                            <input type="hidden" name="exam_id" value="{{ $exam->id }}">
-                                            <button type="submit" class="btn btn-success rounded-pill px-4">
-                                                Submit Score <i class="fas fa-check ms-1"></i>
+                                            <input type="hidden" name="user_exam_id" value="{{ $currentQuestion->user_exam_id }}">
+                                            <input type="hidden" name="time_taken" id="timeTakenInput">
+
+                                            <!-- 👇 type button karo (submit nahi) -->
+                                            <button type="button" class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+                                                Score Exam <i class="fas fa-check ms-1"></i>
                                             </button>
                                         </form>
                                     @endif
@@ -487,18 +645,24 @@
                 @if ($currentQuestion->is_marked == '1')
                     <a href="{{ route('frontend.mark.for.review', $currentQuestion->id) }}"
                         class="btn bg-warning annotation-btn text-dark">
-                        <i class="fas fa-flag-checkered me-1"></i> Unmark
+                        <i class="fas fa-flag-checkered me-1"></i>
+                        <span class="d-none d-sm-inline ms-1">Unmark</span>
                     </a>
                 @else
                     <a href="{{ route('frontend.mark.for.review', $currentQuestion->id) }}"
                         class="btn btn-outline-warning annotation-btn">
-                        <i class="fas fa-flag me-1"></i> Mark for Review
+                        <i class="fas fa-flag me-1"></i>
+                        <span class="d-none d-sm-inline ms-1">Mark for Review</span>
                     </a>
                 @endif
-                <button id="highlightModeBtn" class="btn btn-outline-info annotation-btn"><i
-                        class="fas fa-highlighter me-1"></i> Highlight</button>
-                <button id="strikethroughModeBtn" class="btn btn-outline-danger annotation-btn"><i
-                        class="fas fa-strikethrough me-1"></i> Strikethrough</button>
+                <button id="highlightModeBtn" class="btn btn-outline-info annotation-btn">
+                    <i class="fas fa-highlighter me-1"></i>
+                    <span class="d-none d-sm-inline ms-1">Highlight</span>
+                </button>
+                <button id="strikethroughModeBtn" class="btn btn-outline-danger annotation-btn">
+                    <i class="fas fa-strikethrough me-1"></i>
+                    <span class="d-none d-sm-inline ms-1">Strikethrough</span>
+                </button>
             </div>
         </div>
     </div>
@@ -615,6 +779,35 @@
         </div>
     </div>
 
+    <div class="modal fade" id="confirmSubmitModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                {{-- <div class="modal-header">
+                    <h5 class="modal-title">Confirm Submission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div> --}}
+
+                <div class="modal-body">
+                    <h4>Score Exam ?</h4>
+                    By clicking on the [Score Exam] button below, you will complete your current exam and receive your score. You will not be able to change any answers after this point.
+                </div>
+
+                <div class="modal-footer" style="border: none; margin: 0px; padding: 5px 10px;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <!-- 👇 Final Confirm -->
+                    <button type="button" id="confirmSubmitBtn" class="btn btn-sm btn-success">
+                        Yes, Submit
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('script')
@@ -632,400 +825,364 @@
         });
     </script>
     <script>
-        // ========== TIMER LOGIC ==========
-        let startTime = Date.now();
+        let matches = @json($savedPairs ?? []);
+        if (Array.isArray(matches)) matches = {};
+
+        document.addEventListener('dragstart', function (e) {
+            if (e.target.classList.contains('drag-item')) {
+                e.dataTransfer.setData("text/plain", e.target.dataset.value);
+            }
+        });
+
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+
+            zone.addEventListener('dragover', e => e.preventDefault());
+
+            zone.addEventListener('drop', function (e) {
+                e.preventDefault();
+
+                let newLeft = e.dataTransfer.getData("text/plain");
+                if (!newLeft) return;
+
+                let newRight = this.dataset.right;
+
+                // 🔥 STEP 1: remove old mapping of this LEFT
+                let oldRight = matches[newLeft];
+
+                if (oldRight) {
+                    delete matches[newLeft];
+                }
+
+                // 🔥 STEP 2: remove ANY left already using this RIGHT
+                Object.keys(matches).forEach(left => {
+                    if (matches[left] === newRight) {
+                        delete matches[left];
+
+                        // move that item back to left container
+                        let el = document.querySelector(`.drag-item[data-value="${left}"]`);
+                        if (el) {
+                            document.getElementById('leftContainer').appendChild(el);
+                        }
+                    }
+                });
+
+                // 🔥 STEP 3: if drop zone already has item, send back
+                let existing = this.querySelector('.drag-item');
+                if (existing) {
+                    document.getElementById('leftContainer').appendChild(existing);
+                }
+
+                // 🔥 STEP 4: move new item
+                let dragged = document.querySelector(`.drag-item[data-value="${newLeft}"]`);
+
+                if (dragged) {
+                    let placeholder = this.querySelector('.placeholder');
+                    if (placeholder) placeholder.remove();
+
+                    this.appendChild(dragged);
+                }
+
+                this.classList.add('text-white');
+
+                // 🔥 FINAL STATE UPDATE
+                matches[newLeft] = newRight;
+
+                document.getElementById('matchesInput').value = JSON.stringify(matches);
+
+                console.log("FINAL MATCHES:", matches);
+
+                setTimeout(() => {
+                    document.getElementById('matchingForm').submit();
+                }, 80);
+            });
+        });
+    </script>
+    <script>
+        let typingTimer;
+        let delay = 500; // 0.5 sec
+
+        let input = document.getElementById('fillBlankInput');
+
+        if (input) {
+            input.addEventListener('keyup', function () {
+
+                clearTimeout(typingTimer);
+
+                typingTimer = setTimeout(() => {
+                    if (input.value.trim() !== '') {
+                        document.getElementById('fillBlankForm').submit();
+                    }
+                }, delay);
+
+            });
+
+            input.addEventListener('keydown', function () {
+                clearTimeout(typingTimer);
+            });
+        }
+    </script>
+    <script>
+        let img = document.getElementById('hotspotImage');
+        let marker = document.getElementById('hotspotMarker');
+        let hotspotInput = document.getElementById('hotspotInput');
+
+        if (img) {
+            img.addEventListener('click', function(e) {
+
+                let rect = img.getBoundingClientRect();
+
+                // 🔥 get relative %
+                let x = ((e.clientX - rect.left) / rect.width) * 100;
+                let y = ((e.clientY - rect.top) / rect.height) * 100;
+
+                // 🔥 move marker
+                marker.style.left = x + "%";
+                marker.style.top = y + "%";
+                marker.style.display = "block";
+
+                // 🔥 save to input
+                let data = {
+                    x: x.toFixed(2),
+                    y: y.toFixed(2)
+                };
+
+                hotspotInput.value = JSON.stringify(data);
+
+                console.log("HOTSPOT:", data);
+
+                // 🔥 auto submit
+                setTimeout(() => {
+                    document.getElementById('hotspotForm').submit();
+                }, 100);
+            });
+        }
+    </script>
+    <script>
+        let mode = null;
+        let annotations = @json(json_decode($currentQuestion->annotations ?? '[]', true) ?? []);
+
+        const container = document.getElementById('questionTextContainer');
+
+        const highlightBtn = document.getElementById('highlightModeBtn');
+        const strikeBtn = document.getElementById('strikethroughModeBtn');
+
+        // 🔥 TOGGLE FUNCTION
+        function setMode(newMode) {
+
+            if (mode === newMode) {
+                // same button clicked again → OFF
+                mode = null;
+                highlightBtn.classList.remove('active');
+                strikeBtn.classList.remove('active');
+                return;
+            }
+
+            mode = newMode;
+
+            // reset both
+            highlightBtn.classList.remove('active');
+            strikeBtn.classList.remove('active');
+
+            // activate selected
+            if (mode === 'highlight') {
+                highlightBtn.classList.add('active');
+            } else if (mode === 'strike') {
+                strikeBtn.classList.add('active');
+            }
+        }
+
+        // 🔥 BUTTON EVENTS
+        highlightBtn.addEventListener('click', () => setMode('highlight'));
+        strikeBtn.addEventListener('click', () => setMode('strike'));
+
+        // 🔥 TEXT SELECTION
+        container.addEventListener('mouseup', function () {
+
+            if (!mode) return;
+
+            let selection = window.getSelection();
+            let text = selection.toString();
+
+            if (!text.length) return;
+
+            let range = selection.getRangeAt(0);
+
+            let start = getOffset(container, range.startContainer, range.startOffset);
+            let end = getOffset(container, range.endContainer, range.endOffset);
+
+            annotations.push({
+                type: mode,
+                start: start,
+                end: end
+            });
+
+            applyAnnotations();
+            saveAnnotations();
+
+            selection.removeAllRanges();
+
+            // 🔥 AUTO OFF AFTER ONE USE
+            mode = null;
+            highlightBtn.classList.remove('active');
+            strikeBtn.classList.remove('active');
+        });
+
+        // 🔥 OFFSET
+        function getOffset(container, node, offset) {
+            let range = document.createRange();
+            range.setStart(container, 0);
+            range.setEnd(node, offset);
+            return range.toString().length;
+        }
+
+        // 🔥 APPLY
+        function applyAnnotations() {
+
+            let text = container.dataset.original;
+            let chars = text.split('').map(c => ({
+                char: c,
+                highlight: false,
+                strike: false
+            }));
+
+            // 🔥 APPLY ALL ANNOTATIONS
+            annotations.forEach(a => {
+                for (let i = a.start; i < a.end; i++) {
+                    if (!chars[i]) continue;
+
+                    if (a.type === 'highlight') {
+                        chars[i].highlight = true;
+                    }
+
+                    if (a.type === 'strike') {
+                        chars[i].strike = true;
+                    }
+                }
+            });
+
+            // 🔥 BUILD FINAL HTML
+            let result = '';
+            let currentStyle = '';
+
+            chars.forEach(c => {
+
+                let styleKey = (c.highlight ? 'h' : '') + (c.strike ? 's' : '');
+
+                if (styleKey !== currentStyle) {
+
+                    // close previous
+                    if (currentStyle) {
+                        result += closeTag(currentStyle);
+                    }
+
+                    // open new
+                    if (styleKey) {
+                        result += openTag(styleKey);
+                    }
+
+                    currentStyle = styleKey;
+                }
+
+                result += escapeHtml(c.char);
+            });
+
+            // close last
+            if (currentStyle) {
+                result += closeTag(currentStyle);
+            }
+
+            container.innerHTML = result;
+        }
+
+        // 🔥 TAG HELPERS
+        function openTag(style) {
+            if (style === 'h') return '<mark>';
+            if (style === 's') return '<span style="text-decoration: line-through;">';
+            if (style === 'hs') return '<mark><span style="text-decoration: line-through;">';
+            if (style === 'sh') return '<span style="text-decoration: line-through;"><mark>';
+            return '';
+        }
+
+        function closeTag(style) {
+            if (style === 'h') return '</mark>';
+            if (style === 's') return '</span>';
+            if (style === 'hs') return '</span></mark>';
+            if (style === 'sh') return '</mark></span>';
+            return '';
+        }
+
+        // 🔥 SAVE
+        function saveAnnotations() {
+            fetch("{{ route('frontend.annotation.submit') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    user_exam_answer_id: "{{ $currentQuestion->id }}",
+                    annotations: annotations
+                })
+            });
+        }
+
+        // 🔥 ESCAPE
+        function escapeHtml(text) {
+            return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // 🔥 LOAD
+        document.addEventListener("DOMContentLoaded", function () {
+            applyAnnotations();
+        });
+    </script>
+    <script>
         let timerInterval = null;
 
+        function getStartTime() {
+            let storedTime = localStorage.getItem('exam_start_time');
+
+            if (!storedTime) {
+                storedTime = Date.now();
+                localStorage.setItem('exam_start_time', storedTime);
+            }
+
+            return parseInt(storedTime);
+        }
+
         function updateTimerDisplay() {
+            const startTime = getStartTime();
             const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
             const minutes = Math.floor(elapsedSeconds / 60);
             const seconds = elapsedSeconds % 60;
+
             const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             document.getElementById('examTimer').innerText = formatted;
         }
 
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
-            startTime = Date.now();
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 1000);
         }
 
-        // ========== DATA ==========
-        const questions = [{
-                id: 1,
-                text: `A project manager is finalizing a project that has had repeated problems with cost conformance. The project manager is concerned about what management will say. Senior managers have talked about the problems multiple times in their executive meetings, and it's been reported they feel their concerns have not been addressed. Which of the following types of information would be best for the project manager to use to evaluate performance?`,
-                options: [{
-                    letter: "A",
-                    text: "A list of complaints from senior management."
-                }, {
-                    letter: "B",
-                    text: "The most recent CPI."
-                }, {
-                    letter: "C",
-                    text: "The last bar chart."
-                }, {
-                    letter: "D",
-                    text: "The project budget."
-                }],
-                correct: "B"
-            },
-            {
-                id: 2,
-                text: `An organization wants to proactively reduce the probability and impact of a known risk. Which risk response strategy is most appropriate?`,
-                options: [{
-                    letter: "A",
-                    text: "Accept"
-                }, {
-                    letter: "B",
-                    text: "Transfer"
-                }, {
-                    letter: "C",
-                    text: "Mitigate"
-                }, {
-                    letter: "D",
-                    text: "Exploit"
-                }],
-                correct: "C"
-            },
-            {
-                id: 3,
-                text: `Earned Value Management (EVM) integrates project scope, schedule, and cost. Which of the following indicators shows the budgeted cost of work performed?`,
-                options: [{
-                    letter: "A",
-                    text: "Planned Value (PV)"
-                }, {
-                    letter: "B",
-                    text: "Earned Value (EV)"
-                }, {
-                    letter: "C",
-                    text: "Actual Cost (AC)"
-                }, {
-                    letter: "D",
-                    text: "Cost Performance Index (CPI)"
-                }],
-                correct: "B"
-            }
-        ];
-        const totalQ = questions.length;
-        document.getElementById("totalQCount").innerText = totalQ;
-
-        let userAnswers = {
-            1: null,
-            2: null,
-            3: null
-        };
-        let markedFlags = {
-            1: false,
-            2: false,
-            3: false
-        };
-        let annotations = {
-            1: {
-                highlights: [],
-                strikethroughs: []
-            },
-            2: {
-                highlights: [],
-                strikethroughs: []
-            },
-            3: {
-                highlights: [],
-                strikethroughs: []
-            }
-        };
-        let currentIndex = 0;
-        let activeAnnotationMode = null;
-
-        function escapeHtml(str) {
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        function applyAnnotationsToText(plainText, qId) {
-            const ann = annotations[qId] || {
-                highlights: [],
-                strikethroughs: []
-            };
-            const highlights = ann.highlights || [];
-            const strikes = ann.strikethroughs || [];
-            const allRanges = [...highlights.map(h => ({
-                ...h,
-                type: 'highlight'
-            })), ...strikes.map(s => ({
-                ...s,
-                type: 'strike'
-            }))];
-            allRanges.sort((a, b) => a.start - b.start);
-            let lastIdx = 0,
-                result = [];
-            for (let range of allRanges) {
-                if (range.start > lastIdx) result.push(escapeHtml(plainText.substring(lastIdx, range.start)));
-                const seg = plainText.substring(range.start, range.end);
-                if (range.type === 'highlight') result.push(`<span class="user-highlight">${escapeHtml(seg)}</span>`);
-                else result.push(`<span class="user-strikethrough">${escapeHtml(seg)}</span>`);
-                lastIdx = range.end;
-            }
-            if (lastIdx < plainText.length) result.push(escapeHtml(plainText.substring(lastIdx)));
-            return result.join('');
-        }
-
-        function renderCurrentQuestion() {
-            const q = questions[currentIndex];
-            if (!q) return;
-            document.getElementById("currentQNumber").innerText = currentIndex + 1;
-            const plainText = q.text;
-            const annotatedHtml = applyAnnotationsToText(plainText, q.id);
-            document.getElementById("questionTextContainer").innerHTML = annotatedHtml;
-
-            const selectedLetter = userAnswers[q.id];
-            let optsHtml = '';
-            q.options.forEach(opt => {
-                const isChecked = (selectedLetter === opt.letter);
-                const id = `opt_${q.id}_${opt.letter}`;
-                optsHtml +=
-                    `<div class="option-item" data-letter="${opt.letter}"><div class="form-check"><input class="form-check-input" type="radio" name="questionRadio" id="${id}" value="${opt.letter}" ${isChecked ? 'checked' : ''}><label class="form-check-label radio-label w-100" for="${id}"><strong>${opt.letter}.</strong> ${escapeHtml(opt.text)}</label></div></div>`;
-            });
-            document.getElementById("optionsContainer").innerHTML = optsHtml;
-            document.querySelectorAll('input[name="questionRadio"]').forEach(radio => radio.addEventListener('change', (
-                e) => updateCurrentAnswer(e.target.value)));
-            document.querySelectorAll('.option-item').forEach(div => {
-                const radio = div.querySelector('input');
-                if (radio) div.addEventListener('click', (e) => {
-                    if (!['INPUT', 'LABEL'].includes(e.target.tagName)) {
-                        radio.checked = true;
-                        radio.dispatchEvent(new Event('change', {
-                            bubbles: true
-                        }));
-                    }
-                });
-            });
-
-            const isAnswered = (userAnswers[q.id] !== null);
-            const isMarked = markedFlags[q.id];
-            const statusSpan = document.getElementById("currentStatusBadge");
-            const markSpan = document.getElementById("markBadge");
-            if (isAnswered) {
-                statusSpan.innerHTML = '<i class="fas fa-check-circle me-1"></i> Answered';
-                statusSpan.className = "badge-smart bg-success bg-opacity-10 text-success";
-            } else {
-                statusSpan.innerHTML = '<i class="far fa-circle me-1"></i> Unanswered';
-                statusSpan.className = "badge-smart bg-secondary bg-opacity-10 text-secondary";
-            }
-            markSpan.innerHTML = isMarked ? '<i class="fas fa-flag me-1"></i> Marked for review' :
-                '<i class="far fa-flag me-1"></i> Not marked';
-            markSpan.className = isMarked ? "badge-smart bg-warning bg-opacity-15 text-warning ms-2" :
-                "badge-smart bg-secondary bg-opacity-10 text-secondary ms-2";
-            const markBtn = document.getElementById("globalMarkBtn");
-            if (isMarked) {
-                markBtn.innerHTML = '<i class="fas fa-flag-checkered me-1"></i> Unmark';
-                markBtn.classList.remove("btn-outline-warning");
-                markBtn.classList.add("btn-warning", "text-white");
-            } else {
-                markBtn.innerHTML = '<i class="fas fa-flag me-1"></i> Mark for Review';
-                markBtn.classList.remove("btn-warning", "text-white");
-                markBtn.classList.add("btn-outline-warning");
-            }
-        }
-
-        function updateCurrentAnswer(letter) {
-            const q = questions[currentIndex];
-            if (q) {
-                userAnswers[q.id] = letter;
-                renderCurrentQuestion();
-            }
-        }
-
-        function toggleMarkCurrent() {
-            const q = questions[currentIndex];
-            if (q) {
-                markedFlags[q.id] = !markedFlags[q.id];
-                renderCurrentQuestion();
-            }
-        }
-
-        function nextQuestion() {
-            currentIndex = (currentIndex + 1) % totalQ;
-            renderCurrentQuestion();
-        }
-
-        function prevQuestion() {
-            currentIndex = (currentIndex - 1 + totalQ) % totalQ;
-            renderCurrentQuestion();
-        }
-
-        // Annotation logic
-        function getPlainTextSelectionOffsets(container) {
-            const sel = window.getSelection();
-            if (!sel.rangeCount) return null;
-            const range = sel.getRangeAt(0);
-            if (!container.contains(range.commonAncestorContainer)) return null;
-            const fullText = container.textContent;
-            const preRange = document.createRange();
-            preRange.selectNodeContents(container);
-            preRange.setEnd(range.startContainer, range.startOffset);
-            const startOffset = preRange.toString().length;
-            const endOffset = startOffset + range.toString().length;
-            return {
-                start: startOffset,
-                end: endOffset
-            };
-        }
-
-        function addAnnotationToCurrentQuestion(type, start, end) {
-            if (start === end) return;
-            const q = questions[currentIndex];
-            if (!q) return;
-            const plainLen = q.text.length;
-            const safeStart = Math.min(start, plainLen);
-            const safeEnd = Math.min(end, plainLen);
-            if (safeStart >= safeEnd) return;
-            let ann = annotations[q.id];
-            const targetArr = type === 'highlight' ? ann.highlights : ann.strikethroughs;
-            targetArr.push({
-                start: safeStart,
-                end: safeEnd
-            });
-            targetArr.sort((a, b) => a.start - b.start);
-            let merged = [];
-            for (let seg of targetArr) {
-                if (merged.length === 0 || merged[merged.length - 1].end < seg.start) merged.push({
-                    ...seg
-                });
-                else merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, seg.end);
-            }
-            if (type === 'highlight') ann.highlights = merged;
-            else ann.strikethroughs = merged;
-            annotations[q.id] = ann;
-            renderCurrentQuestion();
-        }
-
-        function handleTextSelection() {
-            if (!activeAnnotationMode) return;
-            const container = document.getElementById("questionTextContainer");
-            if (!container) return;
-            const offsets = getPlainTextSelectionOffsets(container);
-            if (offsets && offsets.start !== offsets.end) {
-                addAnnotationToCurrentQuestion(activeAnnotationMode, offsets.start, offsets.end);
-                window.getSelection()?.removeAllRanges();
-            }
-        }
-
-        const highlightBtn = document.getElementById("highlightModeBtn");
-        const strikeBtn = document.getElementById("strikethroughModeBtn");
-
-        function setAnnotationMode(mode) {
-            if (activeAnnotationMode === mode) {
-                activeAnnotationMode = null;
-                highlightBtn.classList.remove("annotation-active");
-                strikeBtn.classList.remove("annotation-active");
-            } else {
-                activeAnnotationMode = mode;
-                highlightBtn.classList.remove("annotation-active");
-                strikeBtn.classList.remove("annotation-active");
-                if (mode === 'highlight') highlightBtn.classList.add("annotation-active");
-                else strikeBtn.classList.add("annotation-active");
-            }
-        }
-        highlightBtn.addEventListener("click", () => setAnnotationMode('highlight'));
-        strikeBtn.addEventListener("click", () => setAnnotationMode('strikethrough'));
-        document.addEventListener("mouseup", (e) => {
-            if (activeAnnotationMode && document.getElementById("questionTextContainer")?.contains(e.target))
-                handleTextSelection();
-        });
-
-        // MODAL: compact boxes with superscript icons
-        // const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-        // document.getElementById("reviewProgressBtn").addEventListener("click", () => {
-        //     populateModalGrids();
-        //     reviewModal.show();
-        // });
-
-        // function createCompactBox(q, idx) {
-        //     const isAnswered = userAnswers[q.id] !== null;
-        //     const isMarked = markedFlags[q.id];
-        //     const box = document.createElement('div');
-        //     box.className = 'q-box';
-        //     let supHtml = '<div class="q-status-sup">';
-        //     if (isAnswered) supHtml += '<i class="fas fa-check-circle text-success" title="Answered"></i>';
-        //     if (isMarked) supHtml += '<i class="fas fa-flag text-warning" title="Marked"></i>';
-        //     supHtml += '</div>';
-        //     box.innerHTML = supHtml + `<div class="q-num">${q.id}</div>`;
-        //     box.addEventListener('click', () => {
-        //         currentIndex = idx;
-        //         renderCurrentQuestion();
-        //         reviewModal.hide();
-        //     });
-        //     return box;
-        // }
-
-        // function populateModalGrids() {
-        //     const unansweredGrid = document.getElementById("unansweredGrid");
-        //     const markedGrid = document.getElementById("markedGrid");
-        //     const answeredGrid = document.getElementById("answeredGrid");
-        //     const allGrid = document.getElementById("allGrid");
-        //     unansweredGrid.innerHTML = '';
-        //     markedGrid.innerHTML = '';
-        //     answeredGrid.innerHTML = '';
-        //     allGrid.innerHTML = '';
-        //     for (let i = 0; i < totalQ; i++) {
-        //         const q = questions[i];
-        //         const isAnswered = (userAnswers[q.id] !== null);
-        //         const isMarked = markedFlags[q.id];
-        //         allGrid.appendChild(createCompactBox(q, i));
-        //         if (!isAnswered) unansweredGrid.appendChild(createCompactBox(q, i));
-        //         if (isMarked) markedGrid.appendChild(createCompactBox(q, i));
-        //         if (isAnswered) answeredGrid.appendChild(createCompactBox(q, i));
-        //     }
-        //     if (!unansweredGrid.children.length) unansweredGrid.innerHTML =
-        //         '<div class="text-muted text-center p-3">✨ No unanswered questions</div>';
-        //     if (!markedGrid.children.length) markedGrid.innerHTML =
-        //         '<div class="text-muted text-center p-3">🏷 No marked questions</div>';
-        //     if (!answeredGrid.children.length) answeredGrid.innerHTML =
-        //         '<div class="text-muted text-center p-3">✅ No answered questions</div>';
-        //     if (!allGrid.children.length) allGrid.innerHTML =
-        //         '<div class="text-muted text-center p-3">📋 No questions</div>';
-        // }
-
-        // Anti-copy & screenshot
-        // function blockCopy(e) {
-        //     e.preventDefault();
-        //     return false;
-        // }
-
-        // function blockKeys(e) {
-        //     if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key ===
-        //             'U' || e.key === 'i' || e.key === 'I' || e.key === 'p' || e.key === 'P')) {
-        //         e.preventDefault();
-        //         return false;
-        //     }
-        //     if (e.key === 'PrintScreen') {
-        //         e.preventDefault();
-        //         return false;
-        //     }
-        //     if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-        //         e.preventDefault();
-        //         return false;
-        //     }
-        // }
-        // document.addEventListener('contextmenu', blockCopy);
-        // document.addEventListener('keydown', blockKeys);
-        // window.addEventListener('beforeprint', (e) => {
-        //     alert("Printing/screenshots restricted in secure exam.");
-        //     e.preventDefault();
-        //     return false;
-        // });
-
-        document.getElementById("globalMarkBtn").addEventListener("click", toggleMarkCurrent);
-        document.getElementById("prevQuestionBtn").addEventListener("click", prevQuestion);
-        document.getElementById("nextQuestionBtn").addEventListener("click", nextQuestion);
-
-        // Start the timer and render initial question
         startTimer();
-        renderCurrentQuestion();
+
+        document.getElementById('confirmSubmitBtn').addEventListener('click', function () {
+
+            let startTime = localStorage.getItem('exam_start_time');
+
+            if (startTime) {
+                let elapsedSeconds = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+                document.getElementById('timeTakenInput').value = elapsedSeconds;
+            }
+
+            // 👇 localStorage clear
+            localStorage.removeItem('exam_start_time');
+
+            // 👇 form submit
+            document.getElementById('submitExamForm').submit();
+        });
     </script>
 @endsection

@@ -53,6 +53,28 @@ class Helper
 
         return self::humanReadableSize($sizeInKB * 1024); // Convert KB to Bytes
     }
+    public static function formatTime($seconds)
+    {
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
+
+        $totalTime = '';
+
+        if ($hours > 0) {
+            $totalTime .= $hours . ' hour' . ($hours > 1 ? 's ' : ' ');
+        }
+
+        if ($minutes > 0) {
+            $totalTime .= $minutes . ' min ';
+        }
+
+        if ($secs > 0 || $totalTime == '') {
+            $totalTime .= $secs . ' sec';
+        }
+
+        return trim($totalTime);
+    }
 
     // Helper function to format size into KB, MB, GB, etc.
     public static function humanReadableSize($bytes, $decimals = 2)

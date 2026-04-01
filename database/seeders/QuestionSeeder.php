@@ -173,7 +173,7 @@ class QuestionSeeder extends Seeder
         // Question Hotspot seeding
         $hotspots = [
             [
-                'question_id' => 4,
+                'question_id' => 5,
                 'image' => 'uploads/questions/hotspot/HS_15.png',
                 'x' => 100,
                 'y' => 150,
