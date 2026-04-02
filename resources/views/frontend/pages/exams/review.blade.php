@@ -1,6 +1,6 @@
 @extends('frontend.layouts.exam.master')
 
-@section('title', 'Try Demo')
+@section('title', 'Review Exam')
 
 @section('css')
     <style>
@@ -87,12 +87,12 @@
             cursor: pointer;
         }
 
-        .option-item:hover {
-            background: #f6fafe;
-            border-color: #0d6efd;
-            transform: translateX(6px);
-            box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.1);
-        }
+        /* .option-item:hover {
+                                background: #f6fafe;
+                                border-color: #0d6efd;
+                                transform: translateX(6px);
+                                box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.1);
+                            } */
 
         .form-check-input:checked+.form-check-label {
             font-weight: 700;
@@ -305,14 +305,82 @@
                 font-size: 0.85rem;
             }
         }
-        .drag-item{
+
+        .drag-item {
             cursor: grab;
             color: #5a5a5a;
         }
+
         @media (max-width: 576px) {
             .radio-label {
                 font-size: 14px;
             }
+        }
+
+        .option-item {
+            position: relative;
+        }
+
+        .your-answer-badge {
+            position: absolute;
+            left: -120px;
+            background: #ff6a00;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        /* Arrow */
+        .your-answer-badge::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #ff6a00;
+        }
+
+        .correct-answer-badge {
+            position: absolute;
+            left: -120px;
+            background: #69c17d;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        /* Arrow */
+        .correct-answer-badge::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #69c17d;
+        }
+
+        .bg-light-success {
+            background-color: #69c17d !important;
+            color: #fff;
+        }
+
+        .bg-light-danger {
+            background-color: #e74c3c !important;
+            color: #fff;
         }
     </style>
 @endsection
@@ -329,9 +397,6 @@
                     <img class="dark-mode-item navbar-brand-item" src="{{ asset(\App\Helpers\Helper::getLogoDark()) }}"
                         alt="logo">
                 </a>
-            </div>
-            <div class="timer-box">
-                <i class="fas fa-hourglass-half"></i> <span id="examTimer">00:00</span>
             </div>
         </div>
 
@@ -372,210 +437,377 @@
                                     @endif
                                 </div>
                             </div>
-                            <div id="questionTextContainer"
-                                class="question-text-area mb-4"
+                            <div id="questionTextContainer" class="question-text-area mb-4"
                                 data-original="{{ e($currentQuestion->question->question_text) }}">
                             </div>
 
                             @if ($currentQuestion->question->type == 'single_choice')
-                                <form id="singleChoiceForm" method="POST"
-                                    action="{{ route('frontend.single-choice.submit') }}">
-                                    @csrf
 
-                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
-                                    <div id="optionsContainer" class="mb-4">
-                                        @foreach ($currentQuestion->question->options as $option)
-                                            <div class="option-item">
-                                                <div class="form-check">
-                                                    <input class="form-check-input option-radio" type="radio"
-                                                        name="option_id" id="opt_{{ $option->id }}"
-                                                        value="{{ $option->id }}"
-                                                        {{ $currentQuestion->selected_option_id == $option->id ? 'checked' : '' }}>
+                                <div id="optionsContainer" class="mb-4">
 
-                                                    <label class="form-check-label radio-label w-100"
-                                                        for="opt_{{ $option->id }}">
-                                                        <strong>{{ chr(65 + $loop->index) }}.</strong>
-                                                        {{ $option->option_text }}
-                                                    </label>
+                                    @foreach ($currentQuestion->question->options as $option)
+                                        @php
+                                            $isSelected = $currentQuestion->selected_option_id == $option->id;
+                                            $isCorrect = $option->is_correct == 1;
+                                        @endphp
+
+                                        <div class="option-item d-flex align-items-center mb-2 position-relative">
+
+                                            <!-- YOUR ANSWER FLAG -->
+                                            @if ($isSelected)
+                                                <div class="your-answer-badge">
+                                                    YOUR ANSWER
                                                 </div>
+                                            @endif
+
+                                            <!-- Left Icon -->
+                                            <div class="me-2">
+                                                @if ($isSelected && !$isCorrect)
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle"></i>
+                                                    </span>
+                                                @elseif ($isCorrect)
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary">
+                                                        <i class="far fa-circle"></i>
+                                                    </span>
+                                                @endif
                                             </div>
-                                        @endforeach
-                                    </div>
-                                </form>
+
+                                            <!-- Option Text -->
+                                            <div
+                                                class="w-100 p-2
+                                                @if ($isCorrect) bg-light-success
+                                                @elseif($isSelected && !$isCorrect) bg-light-danger @endif
+                                            ">
+                                                <strong>{{ chr(65 + $loop->index) }}.</strong>
+                                                {{ $option->option_text }}
+                                            </div>
+
+                                        </div>
+                                    @endforeach
+
+                                </div>
+
                             @endif
                             @if ($currentQuestion->question->type == 'multi_choice')
-                                <form id="multiChoiceForm" method="POST"
-                                    action="{{ route('frontend.multi-choice.submit') }}">
-                                    @csrf
+                                @php
+                                    $selectedOptions = is_array($currentQuestion->selected_options)
+                                        ? $currentQuestion->selected_options
+                                        : json_decode($currentQuestion->selected_options, true) ?? [];
+                                @endphp
+                                <div id="optionsContainer" class="mb-4">
 
-                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
-                                    <div id="optionsContainer" class="mb-4">
+                                    @foreach ($currentQuestion->question->options as $option)
                                         @php
-                                            $selectedOptions = is_array($currentQuestion->selected_options)
-                                                ? $currentQuestion->selected_options
-                                                : json_decode($currentQuestion->selected_options, true) ?? [];
+                                            $isSelected = in_array($option->id, $selectedOptions);
+                                            $isCorrect = $option->is_correct == 1;
                                         @endphp
-                                        @foreach ($currentQuestion->question->options as $option)
-                                            <div class="option-item">
-                                                <div class="form-check">
-                                                    <input class="form-check-input option-radio" type="checkbox"
-                                                        name="option_id[]" id="opt_{{ $option->id }}"
-                                                        value="{{ $option->id }}"
-                                                        {{ in_array($option->id, $selectedOptions) ? 'checked' : '' }}>
 
-                                                    <label class="form-check-label radio-label w-100"
-                                                        for="opt_{{ $option->id }}">
-                                                        <strong>{{ chr(65 + $loop->index) }}.</strong>
-                                                        {{ $option->option_text }}
-                                                    </label>
+                                        <div class="option-item d-flex align-items-center mb-2 position-relative">
+
+                                            <!-- YOUR ANSWER BADGE -->
+                                            @if ($isSelected)
+                                                <div class="your-answer-badge">
+                                                    YOUR ANSWER
                                                 </div>
+                                            @endif
+
+                                            <!-- LEFT ICON -->
+                                            <div class="me-2">
+                                                @if ($isSelected && !$isCorrect)
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle"></i>
+                                                    </span>
+                                                @elseif ($isCorrect)
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary">
+                                                        <i class="far fa-circle"></i>
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <!-- OPTION TEXT -->
+                                            <div
+                                                class="w-100 p-2
+                                                @if ($isCorrect) bg-light-success
+                                                @elseif($isSelected && !$isCorrect)
+                                                    bg-light-danger @endif
+                                            ">
+                                                <strong>{{ chr(65 + $loop->index) }}.</strong>
+                                                {{ $option->option_text }}
+                                            </div>
+
+                                        </div>
+                                    @endforeach
+
+                                </div>
+                            @endif
+                            @if ($currentQuestion->question->type == 'matching')
+
+                                @php
+                                    $pairs = $currentQuestion->question->matchPairs;
+
+                                    // user answers (left => right)
+                                    $userMatches = json_decode($currentQuestion->matched_pairs ?? '{}', true) ?? [];
+
+                                    // reverse mapping (right => left) for correct answers
+                                    $correctRightToLeft = $pairs->pluck('left_item', 'right_item')->toArray();
+                                @endphp
+
+                                <div class="row">
+
+                                    {{-- COLUMN 1: USER ANSWER --}}
+                                    <div class="col-md-4">
+                                        <h5 class="text-center">Your Answer</h5>
+
+                                        @foreach ($pairs as $pair)
+                                            @php
+                                                $right = $pair->right_item;
+
+                                                // user ne is option ke liye kya select kiya
+                                                $userLeft = array_search($right, $userMatches);
+
+                                                $correctLeft = $correctRightToLeft[$right] ?? null;
+
+                                                $isCorrect = $userLeft === $correctLeft;
+                                            @endphp
+
+                                            <div class="d-flex align-items-center mb-3 position-relative">
+
+                                                {{-- YOUR ANSWER BADGE --}}
+                                                @if ($userLeft)
+                                                    <div class="your-answer-badge">YOUR ANSWER</div>
+                                                @endif
+
+                                                {{-- ICON --}}
+                                                <div class="me-2">
+                                                    @if ($userLeft && !$isCorrect)
+                                                        <span class="badge bg-danger"><i class="fas fa-times"></i></span>
+                                                    @elseif ($isCorrect)
+                                                        <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                                                    @else
+                                                        <span class="badge bg-secondary"><i
+                                                                class="far fa-circle"></i></span>
+                                                    @endif
+                                                </div>
+
+                                                {{-- TEXT --}}
+                                                <div
+                                                    class="w-100 p-2
+                                                    @if ($isCorrect) bg-light-success
+                                                    @elseif($userLeft && !$isCorrect)
+                                                        bg-light-danger @endif
+                                                ">
+                                                    {{ $userLeft ?? '—' }}
+                                                </div>
+
                                             </div>
                                         @endforeach
                                     </div>
-                                </form>
-                            @endif
-                            @if ($currentQuestion->question->type == 'matching')
-                                <form id="matchingForm" method="POST" action="{{ route('frontend.matching.submit') }}">
-                                    @csrf
 
-                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
-                                    <input type="hidden" name="matches" id="matchesInput" value="{}">
 
-                                    @php
-                                        $pairs = $currentQuestion->question->matchPairs;
+                                    {{-- COLUMN 2: OPTIONS (RIGHT SIDE FIXED) --}}
+                                    <div class="col-md-4">
+                                        <h5 class="text-center">Options</h5>
 
-                                        // 🔥 SAFE DECODE
-                                        $savedPairs = json_decode($currentQuestion->matched_pairs ?? '{}', true);
-                                        if (!is_array($savedPairs)) {
-                                            $savedPairs = [];
-                                        }
-
-                                        $allLeftItems = $pairs->pluck('left_item')->toArray();
-                                        $usedLeftItems = array_keys($savedPairs);
-
-                                        // 🔥 LEFT ITEMS (never vanish fix)
-                                        $leftItems = array_diff($allLeftItems, $usedLeftItems);
-                                    @endphp
-
-                                    <div class="row">
-
-                                        {{-- LEFT --}}
-                                        <div class="col-md-4" id="leftContainer">
-                                            <h5 class="text-center">Valued More</h5>
-
-                                            @foreach($leftItems as $item)
-                                                <div class="drag-item p-2 mb-2 border bg-light text-center"
-                                                    draggable="true"
-                                                    data-value="{{ $item }}">
-                                                    {{ $item }}
-                                                </div>
-                                            @endforeach
-                                        </div>
-
-                                        {{-- DROP ZONES --}}
-                                        <div class="col-md-4">
-
-                                            <h5 class="text-center">&nbsp;</h5>
-
-                                            @foreach($pairs as $pair)
-
-                                                @php
-                                                    $matchedLeft = array_search($pair->right_item, $savedPairs);
-                                                    $matchedLeft = $matchedLeft !== false ? $matchedLeft : null;
-                                                @endphp
-
-                                                <div class="drop-zone mb-2 border text-center {{ $matchedLeft ? 'text-white' : '' }}"
-                                                    data-right="{{ $pair->right_item }}">
-
-                                                    @if($matchedLeft)
-                                                        <div class="drag-item p-2 border bg-light text-center"
-                                                            draggable="true"
-                                                            data-value="{{ $matchedLeft }}">
-                                                            {{ $matchedLeft }}
-                                                        </div>
-                                                    @else
-
-                                                        <span class="placeholder p-2 text-center" style="background: none;">Drop here</span>
-                                                    @endif
-
-                                                </div>
-                                            @endforeach
-                                        </div>
-
-                                        {{-- RIGHT --}}
-                                        <div class="col-md-4">
-                                            <h5 class="text-center">Valued Less</h5>
-
-                                            @foreach($pairs as $pair)
-                                                <div class="p-2 mb-2 border bg-light text-center">
-                                                    {{ $pair->right_item }}
-                                                </div>
-                                            @endforeach
-                                        </div>
-
+                                        @foreach ($pairs as $pair)
+                                            <div class="p-2 mb-3 border bg-light text-center">
+                                                {{ $pair->right_item }}
+                                            </div>
+                                        @endforeach
                                     </div>
-                                </form>
+
+
+                                    {{-- COLUMN 3: CORRECT ANSWER --}}
+                                    <div class="col-md-4">
+                                        <h5 class="text-center">Correct Answer</h5>
+
+                                        @foreach ($pairs as $pair)
+                                            @php
+                                                $right = $pair->right_item;
+                                                $correctLeft = $correctRightToLeft[$right] ?? null;
+                                            @endphp
+
+                                            <div class="p-2 mb-3 bg-light-success text-center">
+                                                {{ $correctLeft }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                </div>
+
                             @endif
                             @if ($currentQuestion->question->type == 'fill_blank')
-                                <form id="fillBlankForm" method="POST" action="{{ route('frontend.fill-blank.submit') }}">
-                                    @csrf
+                                @php
+                                    $userAnswer = trim(strtolower($currentQuestion->answer_text ?? ''));
+                                    $correctAnswer = trim(
+                                        strtolower($currentQuestion->question->fillBlank->answer ?? ''),
+                                    );
 
-                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
+                                    $isCorrect = $userAnswer === $correctAnswer;
+                                @endphp
 
-                                    <div class="mb-4">
-                                        <input type="text"
-                                            name="answer_text"
-                                            id="fillBlankInput"
-                                            class="form-control form-control-lg"
-                                            placeholder="Type your answer here..."
-                                            value="{{ $currentQuestion->answer_text ?? '' }}">
-                                    </div>
+                                <div class="mb-4">
 
-                                    @if ($currentQuestion->question->fillBlank && $currentQuestion->question->fillBlank->image)
-                                        <img src="{{ asset($currentQuestion->question->fillBlank->image) }}"
-                                            class="img-fluid mb-3">
-                                    @endif
-                                </form>
-                            @endif
-                            @if ($currentQuestion->question->type == 'hotspot')
-                                <form id="hotspotForm" method="POST" action="{{ route('frontend.hotspot.submit') }}">
-                                    @csrf
+                                    <!-- USER ANSWER -->
+                                    <div class="option-item d-flex align-items-center mb-3 position-relative">
 
-                                    <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
-                                    <input type="hidden" name="hotspot" id="hotspotInput">
-
-                                    @php
-                                        $savedHotspot = json_decode($currentQuestion->hotspot ?? '{}', true);
-                                        $x = $savedHotspot['x'] ?? null;
-                                        $y = $savedHotspot['y'] ?? null;
-                                    @endphp
-
-                                    <div class="position-relative d-inline-block">
-
-                                        @if ($currentQuestion->question->hotspot && $currentQuestion->question->hotspot->image)
-                                            <img id="hotspotImage"
-                                                src="{{ asset($currentQuestion->question->hotspot->image) }}"
-                                                class="img-fluid mb-3"
-                                                style="cursor: crosshair;">
+                                        <!-- YOUR ANSWER BADGE -->
+                                        @if ($userAnswer)
+                                            <div class="your-answer-badge">
+                                                YOUR ANSWER
+                                            </div>
                                         @endif
 
-                                        {{-- 🔴 Marker --}}
-                                        <div id="hotspotMarker"
-                                            style="
-                                                position:absolute;
-                                                width:15px;
-                                                height:15px;
-                                                background:red;
-                                                border-radius:50%;
-                                                transform:translate(-50%, -50%);
-                                                display: {{ $x !== null ? 'block' : 'none' }};
-                                                left: {{ $x ?? 0 }}%;
-                                                top: {{ $y ?? 0 }}%;
-                                            ">
+                                        <!-- USER ANSWER TEXT -->
+                                        <div
+                                            class="px-3 pb-2 pt-2 @if ($isCorrect) bg-light-success
+                                            @elseif($userAnswer && !$isCorrect) bg-light-danger @endif
+                                        ">
+                                            {{ $currentQuestion->answer_text ?? 'Not Attempted' }}
                                         </div>
 
                                     </div>
-                                </form>
+
+                                    <!-- CORRECT ANSWER -->
+                                    @if (!$isCorrect)
+                                        <div class="option-item d-flex align-items-center mb-2">
+                                            <div class="correct-answer-badge">
+                                                Correct Answer
+                                            </div>
+
+                                            <div class="px-3 pb-2 pt-2 bg-light-success">
+                                                {{ $currentQuestion->question->fillBlank->correct_answer }}
+                                            </div>
+
+                                        </div>
+                                    @endif
+
+                                </div>
+
+                                <!-- IMAGE (if exists) -->
+                                @if ($currentQuestion->question->fillBlank && $currentQuestion->question->fillBlank->image)
+                                    <img src="{{ asset($currentQuestion->question->fillBlank->image) }}"
+                                        class="img-fluid mt-2">
+                                @endif
+
+                            @endif
+                            @if ($currentQuestion->question->type == 'hotspot')
+                                @php
+                                    $userHotspot = json_decode($currentQuestion->hotspot ?? '{}', true);
+
+                                    $userX = $userHotspot['x'] ?? null;
+                                    $userY = $userHotspot['y'] ?? null;
+
+                                    // correct box
+                                    $correct = $currentQuestion->question->hotspot;
+
+                                    $boxX = $correct->x ?? null; // left %
+                                    $boxY = $correct->y ?? null; // top %
+                                    $boxWidth = $correct->width ?? 10; // %
+                                    $boxHeight = $correct->height ?? 10; // %
+
+                                    // check if user click inside box
+                                    $isCorrect = false;
+                                    if ($userX !== null && $boxX !== null) {
+                                        $isCorrect =
+                                            $userX >= $boxX &&
+                                            $userX <= ($boxX + $boxWidth) &&
+                                            $userY >= $boxY &&
+                                            $userY <= ($boxY + $boxHeight);
+                                    }
+                                @endphp
+
+                                <div class="mb-4">
+
+                                    <!-- STATUS -->
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="me-2">
+                                            @if ($userX === null)
+                                                <span class="badge bg-secondary p-2">
+                                                    <i class="far fa-circle" style="font-size: 20px;"></i>
+                                                </span>
+                                            @elseif ($isCorrect)
+                                                <span class="badge bg-success p-2">
+                                                    <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger p-2">
+                                                    <i class="fas fa-times-circle" style="font-size: 20px;"></i>
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <div class="w-100 p-2
+                                            @if ($isCorrect) bg-light-success
+                                            @elseif($userX !== null && !$isCorrect) bg-light-danger @endif
+                                        ">
+                                            <strong>
+                                                @if ($userX === null)
+                                                    Not Attempted
+                                                @elseif ($isCorrect)
+                                                    Correct Answer
+                                                @else
+                                                    Wrong Answer
+                                                @endif
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- IMAGE WITH MARKERS -->
+                                    <div class="position-relative d-inline-block">
+
+                                        <img src="{{ asset($currentQuestion->question->hotspot->image) }}"
+                                            class="img-fluid">
+
+                                        <!-- 🟩 CORRECT BOX -->
+                                        @if ($boxX !== null)
+                                            <div style="
+                                                position:absolute;
+                                                left: {{ $boxX }}%;
+                                                top: {{ $boxY }}%;
+                                                width: {{ $boxWidth }}%;
+                                                height: {{ $boxHeight }}%;
+                                                background: rgba(0,255,0,0.3);
+                                                border: 2px solid green;
+                                            "></div>
+                                        @endif
+
+                                        <!-- 🔴 USER CLICK -->
+                                        @if ($userX !== null)
+                                            <div style="
+                                                position:absolute;
+                                                left: {{ $userX }}%;
+                                                top: {{ $userY }}%;
+                                                width:14px;
+                                                height:14px;
+                                                background:red;
+                                                border-radius:50%;
+                                                transform: translate(-50%, -50%);
+                                            "></div>
+
+                                            <!-- YOUR ANSWER BADGE (directly above marker) -->
+                                            <div class="your-answer-badge" style="
+                                                position:absolute;
+                                                left: {{ $userX - 10 }}%;
+                                                top: calc({{ $userY + 2 }}% - 25px); /* badge upar marker ke */
+                                                transform: translateX(-50%);
+                                            ">
+                                                YOUR ANSWER
+                                            </div>
+                                        @endif
+
+                                    </div>
+
+                                </div>
+
                             @endif
                             <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-2">
                                 <div></div>
@@ -592,7 +824,7 @@
 
                                     {{-- Previous --}}
                                     @if ($prevQuestion)
-                                        <a href="{{ route('frontend.exam', [$exam->slug, $userExam->id, $prevQuestion->question_id]) }}"
+                                        <a href="{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $prevQuestion->question_id]) }}"
                                             class="btn btn-outline-primary rounded-pill px-4">
                                             <i class="fas fa-chevron-left me-1"></i> Previous
                                         </a>
@@ -605,21 +837,15 @@
 
                                     {{-- Next OR Submit --}}
                                     @if ($nextQuestion)
-                                        <a href="{{ route('frontend.exam', [$exam->slug, $userExam->id, $nextQuestion->question_id]) }}"
+                                        <a href="{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $nextQuestion->question_id]) }}"
                                             class="btn btn-primary rounded-pill px-4">
                                             Next <i class="fas fa-chevron-right ms-1"></i>
                                         </a>
                                     @else
-                                        <form action="{{ route('frontend.score.submit') }}" method="POST" id="submitExamForm">
-                                            @csrf
-                                            <input type="hidden" name="user_exam_id" value="{{ $currentQuestion->user_exam_id }}">
-                                            <input type="hidden" name="time_taken" id="timeTakenInput">
-
-                                            <!-- 👇 type button karo (submit nahi) -->
-                                            <button type="button" class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
-                                                Score Exam <i class="fas fa-check ms-1"></i>
-                                            </button>
-                                        </form>
+                                        <a href="{{ route('frontend.exam.stat', $userExam->id) }}"
+                                            class="btn btn-warning rounded-pill px-4">
+                                            Finish Review
+                                        </a>
                                     @endif
 
                                 </div>
@@ -636,32 +862,15 @@
 
         <div class="bottom-action-bar d-flex flex-wrap justify-content-between align-items-center">
             <div>
-                <button class="btn btn-soft-primary rounded-pill px-4 py-2 fw-semibold" data-bs-toggle="modal"
+                <button class="btn btn-primary rounded-pill px-4 py-2 fw-semibold" data-bs-toggle="modal"
                     data-bs-target="#reviewModal">
                     <i class="fas fa-chart-simple me-2"></i> Review Progress
                 </button>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                @if ($currentQuestion->is_marked == '1')
-                    <a href="{{ route('frontend.mark.for.review', $currentQuestion->id) }}"
-                        class="btn bg-warning annotation-btn text-dark">
-                        <i class="fas fa-flag-checkered me-1"></i>
-                        <span class="d-none d-sm-inline ms-1">Unmark</span>
-                    </a>
-                @else
-                    <a href="{{ route('frontend.mark.for.review', $currentQuestion->id) }}"
-                        class="btn btn-outline-warning annotation-btn">
-                        <i class="fas fa-flag me-1"></i>
-                        <span class="d-none d-sm-inline ms-1">Mark for Review</span>
-                    </a>
-                @endif
-                <button id="highlightModeBtn" class="btn btn-outline-info annotation-btn">
-                    <i class="fas fa-highlighter me-1"></i>
-                    <span class="d-none d-sm-inline ms-1">Highlight</span>
-                </button>
-                <button id="strikethroughModeBtn" class="btn btn-outline-danger annotation-btn">
-                    <i class="fas fa-strikethrough me-1"></i>
-                    <span class="d-none d-sm-inline ms-1">Strikethrough</span>
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#explainModal">
+                    <i class="fas fa-info me-1"></i>
+                    <span class="d-none d-sm-inline ms-1">Explanation</span>
                 </button>
             </div>
         </div>
@@ -676,7 +885,7 @@
     <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-4 border-0 shadow-xl">
-                <div class="modal-header border-0 pb-0">
+                <div class="modal-header border-0 pb-0 mb-3">
                     <h5 class="modal-title fw-bold"><i class="fas fa-chart-pie me-2"></i>Question Navigator</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -707,7 +916,7 @@
                                 style="max-height: 450px; overflow-y: auto;">
                                 @foreach ($unanswered as $q)
                                     <div class="q-box {{ $currentQuestion->id == $q->id ? 'active-q' : '' }}"
-                                        onclick="window.location.href='{{ route('frontend.exam', [$exam->slug, $userExam->id, $q->question_id]) }}'">
+                                        onclick="window.location.href='{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $q->question_id]) }}'">
                                         <div class="q-status-sup">
                                             @if ($q->is_marked)
                                                 <i class="fas fa-flag text-warning" title="Marked"></i>
@@ -723,7 +932,7 @@
                                 style="max-height: 450px; overflow-y: auto;">
                                 @foreach ($marked as $q)
                                     <div class="q-box {{ $currentQuestion->id == $q->id ? 'active-q' : '' }}"
-                                        onclick="window.location.href='{{ route('frontend.exam', [$exam->slug, $userExam->id, $q->question_id]) }}'">
+                                        onclick="window.location.href='{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $q->question_id]) }}'">
                                         <div class="q-status-sup">
                                             @if ($q->is_answered)
                                                 <i class="fas fa-check-circle text-success" title="Answered"></i>
@@ -739,7 +948,7 @@
                                 style="max-height: 450px; overflow-y: auto;">
                                 @foreach ($answered as $q)
                                     <div class="q-box {{ $currentQuestion->id == $q->id ? 'active-q' : '' }}"
-                                        onclick="window.location.href='{{ route('frontend.exam', [$exam->slug, $userExam->id, $q->question_id]) }}'">
+                                        onclick="window.location.href='{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $q->question_id]) }}'">
                                         <div class="q-status-sup">
                                             @if ($q->is_marked)
                                                 <i class="fas fa-flag text-warning" title="Marked"></i>
@@ -755,7 +964,7 @@
                                 style="max-height: 450px; overflow-y: auto;">
                                 @foreach ($userExamQuestions as $q)
                                     <div class="q-box {{ $currentQuestion->id == $q->id ? 'active-q' : '' }}"
-                                        onclick="window.location.href='{{ route('frontend.exam', [$exam->slug, $userExam->id, $q->question_id]) }}'">
+                                        onclick="window.location.href='{{ route('frontend.exam.review', [$exam->slug, $userExam->id, $q->question_id]) }}'">
                                         <div class="q-status-sup">
                                             @if ($q->is_answered)
                                                 <i class="fas fa-check-circle text-success" title="Answered"></i>
@@ -771,36 +980,22 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4"
-                        data-bs-dismiss="modal">Close</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="confirmSubmitModal" tabindex="-1">
+    <div class="modal fade" id="explainModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
-                {{-- <div class="modal-header">
-                    <h5 class="modal-title">Confirm Submission</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div> --}}
-
                 <div class="modal-body">
-                    <h4>Score Exam ?</h4>
-                    By clicking on the [Score Exam] button below, you will complete your current exam and receive your score. You will not be able to change any answers after this point.
+                    <h4>Explanation</h4>
+                    <p>{{ $currentQuestion->question->ans_explanation }}</p>
                 </div>
 
                 <div class="modal-footer" style="border: none; margin: 0px; padding: 5px 10px;">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
                         Cancel
-                    </button>
-
-                    <!-- 👇 Final Confirm -->
-                    <button type="button" id="confirmSubmitBtn" class="btn btn-sm btn-success">
-                        Yes, Submit
                     </button>
                 </div>
 
@@ -812,191 +1007,13 @@
 
 @section('script')
     <script>
-        document.querySelectorAll('.option-radio').forEach(function(el) {
-            el.addEventListener('change', function() {
-                document.getElementById('singleChoiceForm').submit();
-            });
-        });
-
-        document.querySelectorAll('#multiChoiceForm .option-radio').forEach(function(el) {
-            el.addEventListener('change', function() {
-                document.getElementById('multiChoiceForm').submit();
-            });
-        });
-    </script>
-    <script>
-        let matches = @json($savedPairs ?? []);
-        if (Array.isArray(matches)) matches = {};
-
-        document.addEventListener('dragstart', function (e) {
-            if (e.target.classList.contains('drag-item')) {
-                e.dataTransfer.setData("text/plain", e.target.dataset.value);
-            }
-        });
-
-        document.querySelectorAll('.drop-zone').forEach(zone => {
-
-            zone.addEventListener('dragover', e => e.preventDefault());
-
-            zone.addEventListener('drop', function (e) {
-                e.preventDefault();
-
-                let newLeft = e.dataTransfer.getData("text/plain");
-                if (!newLeft) return;
-
-                let newRight = this.dataset.right;
-
-                // 🔥 STEP 1: remove old mapping of this LEFT
-                let oldRight = matches[newLeft];
-
-                if (oldRight) {
-                    delete matches[newLeft];
-                }
-
-                // 🔥 STEP 2: remove ANY left already using this RIGHT
-                Object.keys(matches).forEach(left => {
-                    if (matches[left] === newRight) {
-                        delete matches[left];
-
-                        // move that item back to left container
-                        let el = document.querySelector(`.drag-item[data-value="${left}"]`);
-                        if (el) {
-                            document.getElementById('leftContainer').appendChild(el);
-                        }
-                    }
-                });
-
-                // 🔥 STEP 3: if drop zone already has item, send back
-                let existing = this.querySelector('.drag-item');
-                if (existing) {
-                    document.getElementById('leftContainer').appendChild(existing);
-                }
-
-                // 🔥 STEP 4: move new item
-                let dragged = document.querySelector(`.drag-item[data-value="${newLeft}"]`);
-
-                if (dragged) {
-                    let placeholder = this.querySelector('.placeholder');
-                    if (placeholder) placeholder.remove();
-
-                    this.appendChild(dragged);
-                }
-
-                this.classList.add('text-white');
-
-                // 🔥 FINAL STATE UPDATE
-                matches[newLeft] = newRight;
-
-                document.getElementById('matchesInput').value = JSON.stringify(matches);
-
-                console.log("FINAL MATCHES:", matches);
-
-                setTimeout(() => {
-                    document.getElementById('matchingForm').submit();
-                }, 80);
-            });
-        });
-    </script>
-    <script>
-        let typingTimer;
-        let delay = 500; // 0.5 sec
-
-        let input = document.getElementById('fillBlankInput');
-
-        if (input) {
-            input.addEventListener('keyup', function () {
-
-                clearTimeout(typingTimer);
-
-                typingTimer = setTimeout(() => {
-                    if (input.value.trim() !== '') {
-                        document.getElementById('fillBlankForm').submit();
-                    }
-                }, delay);
-
-            });
-
-            input.addEventListener('keydown', function () {
-                clearTimeout(typingTimer);
-            });
-        }
-    </script>
-    <script>
-        let img = document.getElementById('hotspotImage');
-        let marker = document.getElementById('hotspotMarker');
-        let hotspotInput = document.getElementById('hotspotInput');
-
-        if (img) {
-            img.addEventListener('click', function(e) {
-
-                let rect = img.getBoundingClientRect();
-
-                // 🔥 get relative %
-                let x = ((e.clientX - rect.left) / rect.width) * 100;
-                let y = ((e.clientY - rect.top) / rect.height) * 100;
-
-                // 🔥 move marker
-                marker.style.left = x + "%";
-                marker.style.top = y + "%";
-                marker.style.display = "block";
-
-                // 🔥 save to input
-                let data = {
-                    x: x.toFixed(2),
-                    y: y.toFixed(2)
-                };
-
-                hotspotInput.value = JSON.stringify(data);
-
-                console.log("HOTSPOT:", data);
-
-                // 🔥 auto submit
-                setTimeout(() => {
-                    document.getElementById('hotspotForm').submit();
-                }, 100);
-            });
-        }
-    </script>
-    <script>
         let mode = null;
         let annotations = @json(json_decode($currentQuestion->annotations ?? '[]', true) ?? []);
 
         const container = document.getElementById('questionTextContainer');
 
-        const highlightBtn = document.getElementById('highlightModeBtn');
-        const strikeBtn = document.getElementById('strikethroughModeBtn');
-
-        // 🔥 TOGGLE FUNCTION
-        function setMode(newMode) {
-
-            if (mode === newMode) {
-                // same button clicked again → OFF
-                mode = null;
-                highlightBtn.classList.remove('active');
-                strikeBtn.classList.remove('active');
-                return;
-            }
-
-            mode = newMode;
-
-            // reset both
-            highlightBtn.classList.remove('active');
-            strikeBtn.classList.remove('active');
-
-            // activate selected
-            if (mode === 'highlight') {
-                highlightBtn.classList.add('active');
-            } else if (mode === 'strike') {
-                strikeBtn.classList.add('active');
-            }
-        }
-
-        // 🔥 BUTTON EVENTS
-        highlightBtn.addEventListener('click', () => setMode('highlight'));
-        strikeBtn.addEventListener('click', () => setMode('strike'));
-
         // 🔥 TEXT SELECTION
-        container.addEventListener('mouseup', function () {
+        container.addEventListener('mouseup', function() {
 
             if (!mode) return;
 
@@ -1111,78 +1128,14 @@
             return '';
         }
 
-        // 🔥 SAVE
-        function saveAnnotations() {
-            fetch("{{ route('frontend.annotation.submit') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                },
-                body: JSON.stringify({
-                    user_exam_answer_id: "{{ $currentQuestion->id }}",
-                    annotations: annotations
-                })
-            });
-        }
-
         // 🔥 ESCAPE
         function escapeHtml(text) {
             return text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         // 🔥 LOAD
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             applyAnnotations();
-        });
-    </script>
-    <script>
-        let timerInterval = null;
-
-        function getStartTime() {
-            let storedTime = localStorage.getItem('exam_start_time');
-
-            if (!storedTime) {
-                storedTime = Date.now();
-                localStorage.setItem('exam_start_time', storedTime);
-            }
-
-            return parseInt(storedTime);
-        }
-
-        function updateTimerDisplay() {
-            const startTime = getStartTime();
-            const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-
-            const minutes = Math.floor(elapsedSeconds / 60);
-            const seconds = elapsedSeconds % 60;
-
-            const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('examTimer').innerText = formatted;
-        }
-
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            updateTimerDisplay();
-            timerInterval = setInterval(updateTimerDisplay, 1000);
-        }
-
-        startTimer();
-
-        document.getElementById('confirmSubmitBtn').addEventListener('click', function () {
-
-            let startTime = localStorage.getItem('exam_start_time');
-
-            if (startTime) {
-                let elapsedSeconds = Math.floor((Date.now() - parseInt(startTime)) / 1000);
-                document.getElementById('timeTakenInput').value = elapsedSeconds;
-            }
-
-            // 👇 localStorage clear
-            localStorage.removeItem('exam_start_time');
-
-            // 👇 form submit
-            document.getElementById('submitExamForm').submit();
         });
     </script>
 @endsection

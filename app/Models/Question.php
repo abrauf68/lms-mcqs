@@ -28,4 +28,24 @@ class Question extends Model
     {
         return $this->hasOne(Hotspot::class);
     }
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class);
+    }
+
+    public function processGroup()
+    {
+        return $this->belongsTo(ProcessGroup::class);
+    }
+
+    public function topic()
+    {
+        return $this->belongsTo(Topic::class);
+    }
+
+    public function approach()
+    {
+        return $this->belongsTo(Approach::class);
+    }
 }

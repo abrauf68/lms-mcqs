@@ -3,15 +3,20 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Approach;
 use App\Models\Contact;
+use App\Models\Domain;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\FillBlank;
 use App\Models\Hotspot;
 use App\Models\MatchPair;
 use App\Models\Option;
+use App\Models\ProcessGroup;
 use App\Models\Product;
 use App\Models\Profile;
+use App\Models\Question;
+use App\Models\Topic;
 use App\Models\User;
 use App\Models\UserExam;
 use App\Models\UserExamAnswer;
@@ -157,7 +162,7 @@ class HomeController extends Controller
                 ->get();
 
             foreach ($questions as $question) {
-                $userExamquestion = UserExamAnswer::where('user_id', $user->id)->where('exam_id', $exam->id)->where('question_id', $question->question_id)->first();
+                $userExamquestion = UserExamAnswer::where('user_id', $user->id)->where('user_exam_id', $userExam->id)->where('exam_id', $exam->id)->where('question_id', $question->question_id)->first();
                 if (!$userExamquestion) {
                     $userExamquestion = new UserExamAnswer();
                     $userExamquestion->user_id = $user->id;
@@ -171,7 +176,7 @@ class HomeController extends Controller
 
             $firstQuestion = $questions->first();
 
-            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'question_id' => $firstQuestion->id]);
+            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $userExam->id, 'question_id' => $firstQuestion->id]);
         } catch (\Throwable $th) {
             //throw $th;
             Log::error('Error creating exam: ' . $th->getMessage());
@@ -179,7 +184,7 @@ class HomeController extends Controller
         }
     }
 
-    public function exam($exam_slug, $question_id)
+    public function exam($exam_slug, $user_exam_id, $question_id)
     {
         try {
             $exam = Exam::where('slug', $exam_slug)->firstOrFail();
@@ -188,12 +193,14 @@ class HomeController extends Controller
                 ->orderBy('question_order', 'asc')
                 ->get();
 
-            $userExamQuestions = UserExamAnswer::with('question')->where('user_id', Auth::id())->where('exam_id', $exam->id)->get();
+            $userExam = UserExam::findOrFail($user_exam_id);
 
-            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('question_id', $question_id)->first();
+            $userExamQuestions = UserExamAnswer::with('question')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('user_exam_id', $userExam->id)->get();
+
+            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('user_exam_id', $userExam->id)->where('question_id', $question_id)->first();
 
             // dd($currentQuestion);
-            return view('frontend.pages.exams.index', compact('exam', 'currentQuestion', 'userExamQuestions'));
+            return view('frontend.pages.exams.index', compact('exam', 'currentQuestion', 'userExamQuestions', 'userExam'));
         } catch (\Throwable $th) {
             Log::error('Exam Page Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
@@ -215,7 +222,7 @@ class HomeController extends Controller
 
             $exam = Exam::find($currentQuestion->exam_id);
 
-            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'question_id' => $currentQuestion->question_id]);
+            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $currentQuestion->user_exam_id, 'question_id' => $currentQuestion->question_id]);
         } catch (\Throwable $th) {
             Log::error('Exam Page Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
@@ -242,7 +249,7 @@ class HomeController extends Controller
 
             $exam = Exam::find($currentQuestion->exam_id);
 
-            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'question_id' => $currentQuestion->question_id]);
+            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $currentQuestion->user_exam_id, 'question_id' => $currentQuestion->question_id]);
         } catch (\Throwable $th) {
             //throw $th;
             Log::error('Error submitting answer: ' . $th->getMessage());
@@ -277,6 +284,7 @@ class HomeController extends Controller
 
             return redirect()->route('frontend.exam', [
                 'exam_slug' => $exam->slug,
+                'user_exam_id' => $currentQuestion->user_exam_id,
                 'question_id' => $currentQuestion->question_id
             ]);
         } catch (\Throwable $th) {
@@ -314,6 +322,7 @@ class HomeController extends Controller
 
             return redirect()->route('frontend.exam', [
                 'exam_slug' => $exam->slug,
+                'user_exam_id' => $currentQuestion->user_exam_id,
                 'question_id' => $currentQuestion->question_id
             ]);
         } catch (\Throwable $th) {
@@ -347,6 +356,7 @@ class HomeController extends Controller
 
             return redirect()->route('frontend.exam', [
                 'exam_slug' => $exam->slug,
+                'user_exam_id' => $currentQuestion->user_exam_id,
                 'question_id' => $currentQuestion->question_id
             ]);
         } catch (\Throwable $th) {
@@ -380,6 +390,7 @@ class HomeController extends Controller
 
             return redirect()->route('frontend.exam', [
                 'exam_slug' => $exam->slug,
+                'user_exam_id' => $currentQuestion->user_exam_id,
                 'question_id' => $currentQuestion->question_id
             ]);
         } catch (\Throwable $th) {
@@ -553,21 +564,236 @@ class HomeController extends Controller
             $userExam->status = 'completed';
             $userExam->save();
 
-            return redirect()->route('frontend.exam.stat', $userExam->exam_id)->with('success', 'Exam scored successfully!');
+            return redirect()->route('frontend.exam.stat', $userExam->id)->with('success', 'Exam scored successfully!');
         } catch (\Throwable $th) {
             Log::error('Score Submit Error: ' . $th->getMessage());
             return redirect()->back()->with('error', 'Something went wrong while calculating the score!');
         }
     }
 
-    public function examStat($exam_id)
+    // public function examStat($exam_id)
+    // {
+    //     try {
+    //         $userExam = UserExam::findOrFail($exam_id);
+    //         $userExamQuestions = UserExamAnswer::with('question')->where('user_exam_id', $userExam->id)->get();
+    //         return view('frontend.pages.exams.exam-stat', compact('userExam', 'userExamQuestions'));
+    //     } catch (\Throwable $th) {
+    //         Log::error('Exam Stat Page Failed', ['error' => $th->getMessage()]);
+    //         return redirect()->back()->with('error', "Something went wrong! Please try again later");
+    //         throw $th;
+    //     }
+    // }
+
+    public function examStat($user_exam_id)
     {
         try {
-            $userExam = UserExam::findOrFail($exam_id);
-            $userExamQuestions = UserExamAnswer::with('question')->where('user_exam_id', $userExam->id)->get();
-            return view('frontend.pages.exams.exam-stat', compact('userExam', 'userExamQuestions'));
+            $userExam = UserExam::with('exam')->findOrFail($user_exam_id);
+
+            // ✅ User answers with question relations
+            $answers = UserExamAnswer::with('question')
+            ->where('user_exam_id', $userExam->id)
+            ->get();
+
+            $firstAns = $answers->first();
+            /*
+        |--------------------------------------------------------------------------
+        | DOMAIN STATS
+        |--------------------------------------------------------------------------
+        */
+            $domains = Domain::where('is_active', 'active')->get();
+
+            $domainItems = $domains->map(function ($domain) use ($answers, $userExam) {
+
+                // ✅ TOTAL questions (questions table)
+                $total = Question::where('domain_id', $domain->id)
+                    ->where('product_id', $userExam->exam_id) // adjust if needed
+                    ->count();
+
+                // ✅ CORRECT answers (user answers)
+                $correct = $answers
+                    ->where('question.domain_id', $domain->id)
+                    ->where('is_correct', '1')
+                    ->count();
+
+                $wrong = $total - $correct;
+
+                $percent = $total > 0
+                    ? round(($correct / $total) * 100, 2)
+                    : 0;
+
+                return [
+                    'name' => $domain->name,
+                    'total' => $total,
+                    'correct' => $correct,
+                    'wrong' => $wrong,
+                    'percent' => $percent,
+                ];
+            });
+
+            $domainStats = collect([
+                'total' => $domainItems->sum('total'),
+                'correct' => $domainItems->sum('correct'),
+                'wrong' => $domainItems->sum('total') - $domainItems->sum('correct'),
+                'percent' => $domainItems->sum('total') > 0
+                    ? round(($domainItems->sum('correct') / $domainItems->sum('total')) * 100, 2)
+                    : 0,
+                'items' => $domainItems->values(),
+            ]);
+
+            /*
+        |--------------------------------------------------------------------------
+        | PROCESS GROUP STATS
+        |--------------------------------------------------------------------------
+        */
+            $processItems = ProcessGroup::where('is_active', 'active')->get()
+                ->map(function ($process) use ($answers, $userExam) {
+
+                    $total = Question::where('process_group_id', $process->id)
+                        ->where('product_id', $userExam->exam_id)
+                        ->count();
+
+                    $correct = $answers
+                        ->where('question.process_group_id', $process->id)
+                        ->where('is_correct', '1')
+                        ->count();
+
+                    $wrong = $total - $correct;
+
+                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+
+                    return [
+                        'name' => $process->name,
+                        'total' => $total,
+                        'correct' => $correct,
+                        'wrong' => $wrong,
+                        'percent' => $percent,
+                    ];
+                });
+
+            $processStats = collect([
+                'total' => $processItems->sum('total'),
+                'correct' => $processItems->sum('correct'),
+                'wrong' => $processItems->sum('total') - $processItems->sum('correct'),
+                'percent' => $processItems->sum('total') > 0
+                    ? round(($processItems->sum('correct') / $processItems->sum('total')) * 100, 2)
+                    : 0,
+                'items' => $processItems->values(),
+            ]);
+
+            /*
+        |--------------------------------------------------------------------------
+        | TOPIC STATS
+        |--------------------------------------------------------------------------
+        */
+            $topicItems = Topic::where('is_active', 'active')->get()
+                ->map(function ($topic) use ($answers, $userExam) {
+
+                    $total = Question::where('topic_id', $topic->id)
+                        ->where('product_id', $userExam->exam_id)
+                        ->count();
+
+                    $correct = $answers
+                        ->where('question.topic_id', $topic->id)
+                        ->where('is_correct', '1')
+                        ->count();
+
+                    $wrong = $total - $correct;
+
+                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+
+                    return [
+                        'name' => $topic->name,
+                        'total' => $total,
+                        'correct' => $correct,
+                        'wrong' => $wrong,
+                        'percent' => $percent,
+                    ];
+                });
+
+            $topicStats = collect([
+                'total' => $topicItems->sum('total'),
+                'correct' => $topicItems->sum('correct'),
+                'wrong' => $topicItems->sum('total') - $topicItems->sum('correct'),
+                'percent' => $topicItems->sum('total') > 0
+                    ? round(($topicItems->sum('correct') / $topicItems->sum('total')) * 100, 2)
+                    : 0,
+                'items' => $topicItems->values(),
+            ]);
+
+            /*
+        |--------------------------------------------------------------------------
+        | APPROACH STATS
+        |--------------------------------------------------------------------------
+        */
+            $approachItems = Approach::where('is_active', 'active')->get()
+                ->map(function ($approach) use ($answers, $userExam) {
+
+                    $total = Question::where('approach_id', $approach->id)
+                        ->where('product_id', $userExam->exam_id)
+                        ->count();
+
+                    $correct = $answers
+                        ->where('question.approach_id', $approach->id)
+                        ->where('is_correct', '1')
+                        ->count();
+
+                    $wrong = $total - $correct;
+
+                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+
+                    return [
+                        'name' => $approach->name,
+                        'total' => $total,
+                        'correct' => $correct,
+                        'wrong' => $wrong,
+                        'percent' => $percent,
+                    ];
+                });
+
+            $approachStats = collect([
+                'total' => $approachItems->sum('total'),
+                'correct' => $approachItems->sum('correct'),
+                'wrong' => $approachItems->sum('total') - $approachItems->sum('correct'),
+                'percent' => $approachItems->sum('total') > 0
+                    ? round(($approachItems->sum('correct') / $approachItems->sum('total')) * 100, 2)
+                    : 0,
+                'items' => $approachItems->values(),
+            ]);
+
+            // dd($domainStats);
+
+            return view('frontend.pages.exams.exam-stat', compact(
+                'userExam',
+                'domainStats',
+                'processStats',
+                'topicStats',
+                'approachStats',
+                'firstAns',
+            ));
         } catch (\Throwable $th) {
             Log::error('Exam Stat Page Failed', ['error' => $th->getMessage()]);
+            return back()->with('error', "Something went wrong!");
+        }
+    }
+    public function examReview($exam_slug, $user_exam_id, $question_id)
+    {
+        try {
+            $exam = Exam::where('slug', $exam_slug)->firstOrFail();
+            $questions = ExamQuestion::where('exam_id', $exam->id)
+                ->orderByRaw('question_order IS NULL')
+                ->orderBy('question_order', 'asc')
+                ->get();
+
+            $userExam = UserExam::findOrFail($user_exam_id);
+
+            $userExamQuestions = UserExamAnswer::with('question')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('user_exam_id', $userExam->id)->get();
+
+            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_exam_id', $userExam->id)->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('question_id', $question_id)->first();
+
+            // dd($currentQuestion);
+            return view('frontend.pages.exams.review', compact('exam', 'currentQuestion', 'userExamQuestions', 'userExam'));
+        } catch (\Throwable $th) {
+            Log::error('Exam Page Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
             throw $th;
         }

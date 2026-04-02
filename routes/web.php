@@ -150,7 +150,7 @@ Route::name('frontend.')->group(function () {
     Route::get('/try-demo', [FrontendHomeController::class, 'tryDemo'])->name('try.demo');
     Route::post('/submit-demo', [FrontendHomeController::class, 'submitDemo'])->name('submit.demo');
     Route::middleware(['auth'])->group(function () {
-        Route::get('/exam/{exam_slug}/{question_id}', [FrontendHomeController::class, 'exam'])->name('exam');
+        Route::get('/exam/{exam_slug}/{user_exam_id}/{question_id}', [FrontendHomeController::class, 'exam'])->name('exam');
         Route::get('/mark-for-review/{question_id}', [FrontendHomeController::class, 'markForReview'])->name('mark.for.review');
         Route::post('/single-choice/submit', [FrontendHomeController::class, 'submitSingleChoice'])->name('single-choice.submit');
         Route::post('/multi-choice/submit', [FrontendHomeController::class, 'submitMultiChoice'])->name('multi-choice.submit');
@@ -159,7 +159,8 @@ Route::name('frontend.')->group(function () {
         Route::post('/hotspot/submit', [FrontendHomeController::class, 'submitHotspot'])->name('hotspot.submit');
         Route::post('/annotation/submit', [FrontendHomeController::class, 'submitAnnotation'])->name('annotation.submit');
         Route::post('/score/submit', [FrontendHomeController::class, 'scoreSubmit'])->name('score.submit');
-        Route::get('/stats/exam/{exam_id}', [FrontendHomeController::class, 'examStat'])->name('exam.stat');
+        Route::get('/stats/exam/{user_exam_id}', [FrontendHomeController::class, 'examStat'])->name('exam.stat');
+        Route::get('/exam/review/{exam_slug}/{user_exam_id}/{question_id}', [FrontendHomeController::class, 'examReview'])->name('exam.review');
     });
 });
 
