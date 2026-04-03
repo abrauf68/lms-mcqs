@@ -1,9 +1,8 @@
-<div class="modal fade" id="loginTypeModal" tabindex="-1">
+{{-- <div class="modal fade" id="loginTypeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-3">
 
             <div class="modal-header border-0">
-                {{-- <h5 class="modal-title">Choose Login Type</h5> --}}
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
@@ -13,12 +12,10 @@
 
                 <div class="d-grid gap-3">
 
-                    <!-- Individual -->
                     <a href="{{ route('login') }}" class="btn btn-primary rounded-pill py-2">
                         <i class="bi bi-person me-2"></i>Individual
                     </a>
 
-                    <!-- Business -->
                     <a href="#" class="btn btn-outline-dark rounded-pill py-2">
                         <i class="bi bi-briefcase me-2"></i>Business
                     </a>
@@ -29,7 +26,7 @@
 
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- =======================
     Footer START -->

@@ -29,7 +29,7 @@
                             <th>{{ __('Name') }}</th>
                             <th>{{ __('Created At') }}</th>
                             <th>{{ __('Status') }}</th>
-                            @canany(['delete product', 'update product'])<th>{{ __('Action') }}</th>@endcan
+                            @canany(['delete approach', 'update approach'])<th>{{ __('Action') }}</th>@endcan
                         </tr>
                     </thead>
                     <tbody>

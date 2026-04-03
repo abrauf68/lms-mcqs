@@ -74,9 +74,9 @@
             <div class="navbar-collapse collapse" id="navbarCollapse">
 
                 <!-- Nav Search END -->
-                <ul class="navbar-nav navbar-nav-scroll mx-auto">
+                <ul class="navbar-nav navbar-nav-scroll me-auto">
                     <!-- Nav item 1 Demos -->
-                    <li class="nav-item dropdown">
+                    {{-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="demoMenu"
                             data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">For Individuals</a>
                         <ul class="dropdown-menu" aria-labelledby="demoMenu">
@@ -107,10 +107,10 @@
                             <li> <a class="dropdown-item" href="#">Training Partner Program</a> </li>
                             <li> <a class="dropdown-item" href="#">Become a Certified Trainer</a> </li>
                         </ul>
-                    </li>
+                    </li> --}}
 
                     <!-- Nav item 4 Component-->
-                    <li class="nav-item"><a class="nav-link" href="#">For Distributors</a></li>
+                    <li class="nav-item"><a class="nav-link">PMP Exam Simulator</a></li>
 
                     <!-- Nav item 4 Component-->
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('frontend.contact') ? 'active' : '' }}" href="{{ route('frontend.contact') }}">Contact</a></li>
@@ -242,9 +242,9 @@
                         <!-- Profile START -->
                     @else
                         <div class="navbar-nav ms-2 m-3">
-                            <button class="btn btn-sm btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#loginTypeModal">
+                            <a class="btn btn-sm btn-dark mb-0" href="{{ route('login') }}">
                                 <i class="bi bi-power me-2"></i>Sign In
-                            </button>
+                            </a>
                         </div>
                     @endif
                 </div>

@@ -71,7 +71,7 @@
 
             </form>
 
-            {{-- <div class="text-center my-3">
+            <div class="text-center my-3">
                 <span class="text-muted small">OR</span>
             </div>
 
@@ -80,7 +80,7 @@
                     Don't have an account?
                     <a href="#" class="text-decoration-none fw-semibold">Sign Up</a>
                 </p>
-            </div> --}}
+            </div>
 
         </div>
 

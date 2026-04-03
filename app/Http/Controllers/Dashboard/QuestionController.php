@@ -3,7 +3,12 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Approach;
+use App\Models\Domain;
+use App\Models\ProcessGroup;
+use App\Models\Product;
 use App\Models\Question;
+use App\Models\Topic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +37,19 @@ class QuestionController extends Controller
      */
     public function create()
     {
-        //
+        $this->authorize('create question');
+        try {
+            $products = Product::where('is_active', 'active')->get();
+            $domains = Domain::where('is_active', 'active')->get();
+            $processGroups = ProcessGroup::where('is_active', 'active')->get();
+            $approaches = Approach::where('is_active', 'active')->get();
+            $topics = Topic::where('is_active', 'active')->get();
+            return view('dashboard.questions.create', compact('products', 'domains', 'processGroups', 'approaches', 'topics'));
+        } catch (\Throwable $th) {
+            Log::error('Questions Create Failed', ['error' => $th->getMessage()]);
+            return redirect()->back()->with('error', "Something went wrong! Please try again later");
+            throw $th;
+        }
     }
 
     /**

@@ -146,7 +146,7 @@
                     </ul>
 
                     <!-- Client slider START -->
-                    <div class="row justify-content-center">
+                    {{-- <div class="row justify-content-center">
                         <!-- Sub tittle -->
                         <h5 class="mb-3">Trusted by</h5>
                         <div class="col-md-12">
@@ -180,7 +180,7 @@
                             </div>
                             <!-- Slider END -->
                         </div>
-                    </div>
+                    </div> --}}
                     <!-- Client slider END -->
 
                 </div>
