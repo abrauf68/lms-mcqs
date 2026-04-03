@@ -79,7 +79,7 @@
 
         .option-item {
             background: #ffffff;
-            border: 1.5px solid #e9edf4;
+            /* border: 1.5px solid #e9edf4; */
             border-radius: 1.2rem;
             padding: 0.85rem 1.2rem;
             margin-bottom: 0.85rem;
