@@ -62,9 +62,9 @@
 
         let cookieBox = document.getElementById("cookieBox");
 
-        // 🔹 Check if already selected
-        if (localStorage.getItem("cookieChoice")) {
-            cookieBox.style.display = "none";
+        // 🔹 agar pehle select nahi kia to show karo
+        if (!localStorage.getItem("cookieChoice")) {
+            cookieBox.style.display = "block";
         }
 
         // ✅ Accept

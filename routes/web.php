@@ -5,12 +5,18 @@ use App\Http\Controllers\Auth\GithubController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Dashboard\ApproachController;
+use App\Http\Controllers\Dashboard\DomainController;
 use App\Http\Controllers\Dashboard\HomeController;
 use App\Http\Controllers\Dashboard\NotificationController;
+use App\Http\Controllers\Dashboard\ProcessGroupController;
+use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProfileController;
+use App\Http\Controllers\Dashboard\QuestionController;
 use App\Http\Controllers\Dashboard\RolePermission\PermissionController;
 use App\Http\Controllers\Dashboard\RolePermission\RoleController;
 use App\Http\Controllers\Dashboard\SettingController;
+use App\Http\Controllers\Dashboard\TopicController;
 use App\Http\Controllers\Dashboard\User\ArchivedUserController;
 use App\Http\Controllers\Dashboard\User\UserController;
 use App\Http\Controllers\Frontend\HomeController as FrontendHomeController;
@@ -133,9 +139,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('email/setting/{id}', [SettingController::class, 'updateEmailSettings'])->name('setting.email.update');
             Route::post('send-mail/setting', [SettingController::class, 'sendTestMail'])->name('setting.send_test_mail');
 
-            // User Dashboard Authentication Routes
+            //Product Routes
+            Route::resource('products', ProductController::class);
+            Route::get('products/status/{id}', [ProductController::class, 'updateStatus'])->name('products.status.update');
 
+            // Domain Routes
+            Route::resource('domains', DomainController::class);
+            Route::get('domains/status/{id}', [DomainController::class, 'updateStatus'])->name('domains.status.update');
 
+            // Process Group Routes
+            Route::resource('process-groups', ProcessGroupController::class);
+            Route::get('process-groups/status/{id}', [ProcessGroupController::class, 'updateStatus'])->name('process-groups.status.update');
+
+            // Topic Routes
+            Route::resource('topics', TopicController::class);
+            Route::get('topics/status/{id}', [TopicController::class, 'updateStatus'])->name('topics.status.update');
+
+            // Approach Routes
+            Route::resource('approaches', ApproachController::class);
+            Route::get('approaches/status/{id}', [ApproachController::class, 'updateStatus'])->name('approaches.status.update');
+
+            // Question Routes
+            Route::resource('questions', QuestionController::class);
+            Route::get('questions/status/{id}', [QuestionController::class, 'updateStatus'])->name('questions.status.update');
 
         });
     });

@@ -158,7 +158,7 @@
                     </div>
                     @if (Auth::user())
                         <!-- Profile START -->
-                        <div class="dropdown ms-1 ms-lg-0">
+                        <div class="dropdown ms-2 m-3">
                             <a class="avatar avatar-sm p-0" href="#" id="profileDropdown" role="button"
                                 data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown"
                                 aria-expanded="false">
@@ -173,11 +173,13 @@
                                         <!-- Avatar -->
                                         <div class="avatar me-3">
                                             <img class="avatar-img rounded-circle shadow"
-                                                src="{{ 'frontAssets/images/avatar/01.jpg' }}" alt="avatar">
+                                                src="{{ Auth::user()->image ?? 'frontAssets/images/avatar/01.jpg' }}" alt="avatar">
                                         </div>
                                         <div>
-                                            <a class="h6" href="#">Lori Ferguson</a>
-                                            <p class="small m-0">example@gmail.com</p>
+                                            <a class="h6" href="#">{{ Auth::user()->name }}</a>
+                                            <p class="small m-0" title="{{ Auth::user()->email }}">
+                                                {{ \Illuminate\Support\Str::limit(Auth::user()->email, 20, '...') }}
+                                            </p>
                                         </div>
                                     </div>
                                 </li>
@@ -192,9 +194,12 @@
                                 <li><a class="dropdown-item" href="#"><i
                                             class="bi bi-info-circle fa-fw me-2"></i>Help</a>
                                 </li>
-                                <li><a class="dropdown-item bg-danger-soft-hover" href="#"><i
+                                <li><a href="javasacript:void(0);" class="dropdown-item bg-danger-soft-hover" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i
                                             class="bi bi-power fa-fw me-2"></i>Sign Out</a></li>
                                 <li>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <!-- Dark mode options START -->
@@ -237,7 +242,9 @@
                         <!-- Profile START -->
                     @else
                         <div class="navbar-nav ms-2 m-3">
-                            <button class="btn btn-sm btn-dark mb-0"><i class="bi bi-power me-2"></i>Sign In</button>
+                            <button class="btn btn-sm btn-dark mb-0" data-bs-toggle="modal" data-bs-target="#loginTypeModal">
+                                <i class="bi bi-power me-2"></i>Sign In
+                            </button>
                         </div>
                     @endif
                 </div>

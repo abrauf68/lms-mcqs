@@ -176,7 +176,7 @@ class HomeController extends Controller
 
             $firstQuestion = $questions->first();
 
-            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $userExam->id, 'question_id' => $firstQuestion->id]);
+            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $userExam->id, 'question_id' => $firstQuestion->id])->with('reset_timer', true);
         } catch (\Throwable $th) {
             //throw $th;
             Log::error('Error creating exam: ' . $th->getMessage());

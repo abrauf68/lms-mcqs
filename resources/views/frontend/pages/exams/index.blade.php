@@ -305,10 +305,12 @@
                 font-size: 0.85rem;
             }
         }
-        .drag-item{
+
+        .drag-item {
             cursor: grab;
             color: #5a5a5a;
         }
+
         @media (max-width: 576px) {
             .radio-label {
                 font-size: 14px;
@@ -372,8 +374,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div id="questionTextContainer"
-                                class="question-text-area mb-4"
+                            <div id="questionTextContainer" class="question-text-area mb-4"
                                 data-original="{{ e($currentQuestion->question->question_text) }}">
                             </div>
 
@@ -463,9 +464,8 @@
                                         <div class="col-md-4" id="leftContainer">
                                             <h5 class="text-center">Valued More</h5>
 
-                                            @foreach($leftItems as $item)
-                                                <div class="drag-item p-2 mb-2 border bg-light text-center"
-                                                    draggable="true"
+                                            @foreach ($leftItems as $item)
+                                                <div class="drag-item p-2 mb-2 border bg-light text-center" draggable="true"
                                                     data-value="{{ $item }}">
                                                     {{ $item }}
                                                 </div>
@@ -477,8 +477,7 @@
 
                                             <h5 class="text-center">&nbsp;</h5>
 
-                                            @foreach($pairs as $pair)
-
+                                            @foreach ($pairs as $pair)
                                                 @php
                                                     $matchedLeft = array_search($pair->right_item, $savedPairs);
                                                     $matchedLeft = $matchedLeft !== false ? $matchedLeft : null;
@@ -487,15 +486,14 @@
                                                 <div class="drop-zone mb-2 border text-center {{ $matchedLeft ? 'text-white' : '' }}"
                                                     data-right="{{ $pair->right_item }}">
 
-                                                    @if($matchedLeft)
+                                                    @if ($matchedLeft)
                                                         <div class="drag-item p-2 border bg-light text-center"
-                                                            draggable="true"
-                                                            data-value="{{ $matchedLeft }}">
+                                                            draggable="true" data-value="{{ $matchedLeft }}">
                                                             {{ $matchedLeft }}
                                                         </div>
                                                     @else
-
-                                                        <span class="placeholder p-2 text-center" style="background: none;">Drop here</span>
+                                                        <span class="placeholder p-2 text-center"
+                                                            style="background: none;">Drop here</span>
                                                     @endif
 
                                                 </div>
@@ -506,7 +504,7 @@
                                         <div class="col-md-4">
                                             <h5 class="text-center">Valued Less</h5>
 
-                                            @foreach($pairs as $pair)
+                                            @foreach ($pairs as $pair)
                                                 <div class="p-2 mb-2 border bg-light text-center">
                                                     {{ $pair->right_item }}
                                                 </div>
@@ -517,17 +515,15 @@
                                 </form>
                             @endif
                             @if ($currentQuestion->question->type == 'fill_blank')
-                                <form id="fillBlankForm" method="POST" action="{{ route('frontend.fill-blank.submit') }}">
+                                <form id="fillBlankForm" method="POST"
+                                    action="{{ route('frontend.fill-blank.submit') }}">
                                     @csrf
 
                                     <input type="hidden" name="user_exam_answer_id" value="{{ $currentQuestion->id }}">
 
                                     <div class="mb-4">
-                                        <input type="text"
-                                            name="answer_text"
-                                            id="fillBlankInput"
-                                            class="form-control form-control-lg"
-                                            placeholder="Type your answer here..."
+                                        <input type="text" name="answer_text" id="fillBlankInput"
+                                            class="form-control form-control-lg" placeholder="Type your answer here..."
                                             value="{{ $currentQuestion->answer_text ?? '' }}">
                                     </div>
 
@@ -555,8 +551,7 @@
                                         @if ($currentQuestion->question->hotspot && $currentQuestion->question->hotspot->image)
                                             <img id="hotspotImage"
                                                 src="{{ asset($currentQuestion->question->hotspot->image) }}"
-                                                class="img-fluid mb-3"
-                                                style="cursor: crosshair;">
+                                                class="img-fluid mb-3" style="cursor: crosshair;">
                                         @endif
 
                                         {{-- 🔴 Marker --}}
@@ -610,13 +605,16 @@
                                             Next <i class="fas fa-chevron-right ms-1"></i>
                                         </a>
                                     @else
-                                        <form action="{{ route('frontend.score.submit') }}" method="POST" id="submitExamForm">
+                                        <form action="{{ route('frontend.score.submit') }}" method="POST"
+                                            id="submitExamForm">
                                             @csrf
-                                            <input type="hidden" name="user_exam_id" value="{{ $currentQuestion->user_exam_id }}">
+                                            <input type="hidden" name="user_exam_id"
+                                                value="{{ $currentQuestion->user_exam_id }}">
                                             <input type="hidden" name="time_taken" id="timeTakenInput">
 
                                             <!-- 👇 type button karo (submit nahi) -->
-                                            <button type="button" class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+                                            <button type="button" class="btn btn-success rounded-pill px-4"
+                                                data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
                                                 Score Exam <i class="fas fa-check ms-1"></i>
                                             </button>
                                         </form>
@@ -790,7 +788,8 @@
 
                 <div class="modal-body">
                     <h4>Score Exam ?</h4>
-                    By clicking on the [Score Exam] button below, you will complete your current exam and receive your score. You will not be able to change any answers after this point.
+                    By clicking on the [Score Exam] button below, you will complete your current exam and receive your
+                    score. You will not be able to change any answers after this point.
                 </div>
 
                 <div class="modal-footer" style="border: none; margin: 0px; padding: 5px 10px;">
@@ -828,7 +827,7 @@
         let matches = @json($savedPairs ?? []);
         if (Array.isArray(matches)) matches = {};
 
-        document.addEventListener('dragstart', function (e) {
+        document.addEventListener('dragstart', function(e) {
             if (e.target.classList.contains('drag-item')) {
                 e.dataTransfer.setData("text/plain", e.target.dataset.value);
             }
@@ -838,7 +837,7 @@
 
             zone.addEventListener('dragover', e => e.preventDefault());
 
-            zone.addEventListener('drop', function (e) {
+            zone.addEventListener('drop', function(e) {
                 e.preventDefault();
 
                 let newLeft = e.dataTransfer.getData("text/plain");
@@ -904,7 +903,7 @@
         let input = document.getElementById('fillBlankInput');
 
         if (input) {
-            input.addEventListener('keyup', function () {
+            input.addEventListener('keyup', function() {
 
                 clearTimeout(typingTimer);
 
@@ -916,7 +915,7 @@
 
             });
 
-            input.addEventListener('keydown', function () {
+            input.addEventListener('keydown', function() {
                 clearTimeout(typingTimer);
             });
         }
@@ -996,7 +995,7 @@
         strikeBtn.addEventListener('click', () => setMode('strike'));
 
         // 🔥 TEXT SELECTION
-        container.addEventListener('mouseup', function () {
+        container.addEventListener('mouseup', function() {
 
             if (!mode) return;
 
@@ -1132,14 +1131,27 @@
         }
 
         // 🔥 LOAD
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             applyAnnotations();
         });
     </script>
+    @if(session('reset_timer'))
+    <script>
+        // 👇 NEW TEST START → reset everything
+        localStorage.removeItem('exam_finished');
+        localStorage.removeItem('exam_start_time');
+    </script>
+    @endif
     <script>
         let timerInterval = null;
 
+        function isExamFinished() {
+            return localStorage.getItem('exam_finished') === 'true';
+        }
+
         function getStartTime() {
+            if (isExamFinished()) return null; // 👈 STOP
+
             let storedTime = localStorage.getItem('exam_start_time');
 
             if (!storedTime) {
@@ -1152,6 +1164,12 @@
 
         function updateTimerDisplay() {
             const startTime = getStartTime();
+
+            if (!startTime) {
+                document.getElementById('examTimer').innerText = "00:00";
+                return;
+            }
+
             const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
 
             const minutes = Math.floor(elapsedSeconds / 60);
@@ -1162,14 +1180,17 @@
         }
 
         function startTimer() {
+            if (isExamFinished()) return; // 👈 STOP
+
             if (timerInterval) clearInterval(timerInterval);
+
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 1000);
         }
 
         startTimer();
 
-        document.getElementById('confirmSubmitBtn').addEventListener('click', function () {
+        document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
 
             let startTime = localStorage.getItem('exam_start_time');
 
@@ -1178,10 +1199,12 @@
                 document.getElementById('timeTakenInput').value = elapsedSeconds;
             }
 
-            // 👇 localStorage clear
+            // ✅ mark exam finished
+            localStorage.setItem('exam_finished', 'true');
+
+            // ❌ clear timer
             localStorage.removeItem('exam_start_time');
 
-            // 👇 form submit
             document.getElementById('submitExamForm').submit();
         });
     </script>

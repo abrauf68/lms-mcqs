@@ -16,9 +16,9 @@ class LoginController extends Controller
     public function login()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('frontend.home');
         } else {
-            return view('auth.login');
+            return view('frontend.pages.auth.login');
         }
     }
 
@@ -42,6 +42,7 @@ class LoginController extends Controller
 
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
+            Log::error("Login Validation Failed: " . json_encode($validate->errors()->all()));
             return Redirect::back()->withErrors($validate)->withInput($request->all())->with('error', 'Validation Error!');
         }
 
@@ -64,7 +65,15 @@ class LoginController extends Controller
                     Auth::attempt(['email' => $userfind->email, 'password' => $request->password], $remember_me);
 
                     if (Auth::check()) {
-                        return redirect()->route('dashboard')->with('success', "Login successfully!");
+
+                        $user = Auth::user();
+
+                        if ($userfind->hasRole('user') || $userfind->hasRole('business')) {
+                            return redirect()->route('frontend.home')->with('success', 'Login successfully!');
+                        }
+
+                        // default (admin ya koi aur role)
+                        return redirect()->route('dashboard')->with('success', 'Login successfully!');
                     } else {
                         return redirect()->back()->withInput($request->all())->with('error', 'Authentication Error');
                     }

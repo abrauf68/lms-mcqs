@@ -42,11 +42,47 @@ class UserRolePermissionSeeder extends Seeder
         Permission::create(['name' => 'update setting']);
         Permission::create(['name' => 'delete setting']);
 
+        Permission::create(['name' => 'view product']);
+        Permission::create(['name' => 'create product']);
+        Permission::create(['name' => 'update product']);
+        Permission::create(['name' => 'delete product']);
+
+        Permission::create(['name' => 'view domain']);
+        Permission::create(['name' => 'create domain']);
+        Permission::create(['name' => 'update domain']);
+        Permission::create(['name' => 'delete domain']);
+
+        Permission::create(['name' => 'view process group']);
+        Permission::create(['name' => 'create process group']);
+        Permission::create(['name' => 'update process group']);
+        Permission::create(['name' => 'delete process group']);
+
+        Permission::create(['name' => 'view approach']);
+        Permission::create(['name' => 'create approach']);
+        Permission::create(['name' => 'update approach']);
+        Permission::create(['name' => 'delete approach']);
+
+        Permission::create(['name' => 'view topic']);
+        Permission::create(['name' => 'create topic']);
+        Permission::create(['name' => 'update topic']);
+        Permission::create(['name' => 'delete topic']);
+
+        Permission::create(['name' => 'view question']);
+        Permission::create(['name' => 'create question']);
+        Permission::create(['name' => 'update question']);
+        Permission::create(['name' => 'delete question']);
+
+        Permission::create(['name' => 'view exam']);
+        Permission::create(['name' => 'create exam']);
+        Permission::create(['name' => 'update exam']);
+        Permission::create(['name' => 'delete exam']);
+
 
         // Create Roles
         $superAdminRole = Role::create(['name' => 'super-admin']); //as super-admin
         $adminRole = Role::create(['name' => 'admin']);
         $userRole = Role::create(['name' => 'user']);
+        $businessRole = Role::create(['name' => 'business']);
 
         // give all permissions to super-admin role.
         $allPermissionNames = Permission::pluck('name')->toArray();

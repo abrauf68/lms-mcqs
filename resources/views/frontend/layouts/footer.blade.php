@@ -1,3 +1,36 @@
+<div class="modal fade" id="loginTypeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3">
+
+            <div class="modal-header border-0">
+                {{-- <h5 class="modal-title">Choose Login Type</h5> --}}
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body text-center">
+
+                <h5 class="mb-4">Please select how you want to continue</h5>
+
+                <div class="d-grid gap-3">
+
+                    <!-- Individual -->
+                    <a href="{{ route('login') }}" class="btn btn-primary rounded-pill py-2">
+                        <i class="bi bi-person me-2"></i>Individual
+                    </a>
+
+                    <!-- Business -->
+                    <a href="#" class="btn btn-outline-dark rounded-pill py-2">
+                        <i class="bi bi-briefcase me-2"></i>Business
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <!-- =======================
     Footer START -->
 <footer class="pt-0 bg-blue rounded-4 position-relative mx-2 mx-md-4 mb-3">
@@ -63,7 +96,7 @@
 
 <!-- Cookie alert box START -->
 <div class="alert alert-light fade show position-fixed start-0 bottom-0 z-index-99 rounded-3 shadow p-4 ms-3 mb-3 col-10 col-md-4 col-lg-3 col-xxl-2"
-    role="alert" id="cookieBox">
+    role="alert" id="cookieBox" style="display: none;">
 
     <div class="text-dark text-center">
         <img src="{{ 'frontAssets/images/element/27.svg' }}" class="h-50px mb-3" alt="cookie">
