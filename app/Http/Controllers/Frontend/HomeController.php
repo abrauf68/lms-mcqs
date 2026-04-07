@@ -12,6 +12,7 @@ use App\Models\FillBlank;
 use App\Models\Hotspot;
 use App\Models\MatchPair;
 use App\Models\Option;
+use App\Models\Pricing;
 use App\Models\ProcessGroup;
 use App\Models\Product;
 use App\Models\Profile;
@@ -20,18 +21,28 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Models\UserExam;
 use App\Models\UserExamAnswer;
+use App\Models\Country;
+use App\Models\UserBilling;
+use App\Models\UserPricing;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
 
 class HomeController extends Controller
 {
     public function home()
     {
         try {
-            return view('frontend.pages.home');
+            $pricings = Pricing::where('is_active', 'active')->get();
+            return view('frontend.pages.home', compact('pricings'));
         } catch (\Throwable $th) {
             Log::error('Home Index Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
@@ -88,6 +99,13 @@ class HomeController extends Controller
     public function thankYou()
     {
         try {
+            if (request()->has('pricing')) {
+                $userPricing = UserPricing::with('pricing', 'user.userBillings', 'transaction')->find(request()->pricing);
+                if (!$userPricing || $userPricing->user_id != Auth::id()) {
+                    return redirect()->route('frontend.home')->with('error', 'Invalid access to thank you page.');
+                }
+                return view('frontend.pages.thank-you', compact('userPricing'));
+            }
             return view('frontend.pages.thank-you');
         } catch (\Throwable $th) {
             Log::error('Thank You Page Failed', ['error' => $th->getMessage()]);
@@ -103,6 +121,18 @@ class HomeController extends Controller
             return view('frontend.pages.try-demo', compact('products'));
         } catch (\Throwable $th) {
             Log::error('Try Demo Page Failed', ['error' => $th->getMessage()]);
+            return redirect()->back()->with('error', "Something went wrong! Please try again later");
+            throw $th;
+        }
+    }
+
+    public function pricings()
+    {
+        try {
+            $pricings = Pricing::where('is_active', 'active')->get();
+            return view('frontend.pages.pricings', compact('pricings'));
+        } catch (\Throwable $th) {
+            Log::error('Pricings Page Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
             throw $th;
         }
@@ -174,9 +204,9 @@ class HomeController extends Controller
                 }
             }
 
-            $firstQuestion = $questions->first();
+            $firstQuestion = UserExamAnswer::where('user_id', $user->id)->where('user_exam_id', $userExam->id)->first();
 
-            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $userExam->id, 'question_id' => $firstQuestion->id])->with('reset_timer', true);
+            return redirect()->route('frontend.exam', ['exam_slug' => $exam->slug, 'user_exam_id' => $userExam->id, 'question_id' => $firstQuestion->question_id])->with('reset_timer', true);
         } catch (\Throwable $th) {
             //throw $th;
             Log::error('Error creating exam: ' . $th->getMessage());
@@ -187,6 +217,7 @@ class HomeController extends Controller
     public function exam($exam_slug, $user_exam_id, $question_id)
     {
         try {
+            // dd($question_id);
             $exam = Exam::where('slug', $exam_slug)->firstOrFail();
             $questions = ExamQuestion::where('exam_id', $exam->id)
                 ->orderByRaw('question_order IS NULL')
@@ -196,8 +227,9 @@ class HomeController extends Controller
             $userExam = UserExam::findOrFail($user_exam_id);
 
             $userExamQuestions = UserExamAnswer::with('question')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('user_exam_id', $userExam->id)->get();
+            // dd($userExamQuestions);
 
-            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('exam_id', $exam->id)->where('user_exam_id', $userExam->id)->where('question_id', $question_id)->first();
+            $currentQuestion = UserExamAnswer::with('question.options', 'question.fillBlank', 'question.matchPairs', 'question.hotspot')->where('user_id', Auth::id())->where('user_exam_id', $userExam->id)->where('question_id', $question_id)->first();
 
             // dd($currentQuestion);
             return view('frontend.pages.exams.index', compact('exam', 'currentQuestion', 'userExamQuestions', 'userExam'));
@@ -517,12 +549,21 @@ class HomeController extends Controller
                         $hotspot = Hotspot::where('question_id', $question->id)->first();
 
                         if ($hotspot) {
-                            $dx = $userPoint['x'] - $hotspot->x;
-                            $dy = $userPoint['y'] - $hotspot->y;
 
-                            $distance = sqrt($dx * $dx + $dy * $dy);
+                            $px = $userPoint['x'];
+                            $py = $userPoint['y'];
 
-                            if ($distance <= $hotspot->radius) {
+                            $hx = $hotspot->x;
+                            $hy = $hotspot->y;
+                            $hw = $hotspot->width;
+                            $hh = $hotspot->height;
+
+                            if (
+                                $px >= $hx &&
+                                $px <= ($hx + $hw) &&
+                                $py >= $hy &&
+                                $py <= ($hy + $hh)
+                            ) {
                                 $isCorrect = 1;
                             }
                         }
@@ -589,33 +630,29 @@ class HomeController extends Controller
         try {
             $userExam = UserExam::with('exam')->findOrFail($user_exam_id);
 
-            // ✅ User answers with question relations
+            // ✅ All answers of this attempt
             $answers = UserExamAnswer::with('question')
-            ->where('user_exam_id', $userExam->id)
-            ->get();
+                ->where('user_exam_id', $userExam->id)
+                ->get();
 
             $firstAns = $answers->first();
+
             /*
-        |--------------------------------------------------------------------------
-        | DOMAIN STATS
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | DOMAIN STATS (FROM ANSWERS ONLY)
+            |--------------------------------------------------------------------------
+            */
             $domains = Domain::where('is_active', 'active')->get();
 
-            $domainItems = $domains->map(function ($domain) use ($answers, $userExam) {
+            $domainItems = $domains->map(function ($domain) use ($answers) {
 
-                // ✅ TOTAL questions (questions table)
-                $total = Question::where('domain_id', $domain->id)
-                    ->where('product_id', $userExam->exam_id) // adjust if needed
-                    ->count();
+                $filtered = $answers->where('question.domain_id', $domain->id);
 
-                // ✅ CORRECT answers (user answers)
-                $correct = $answers
-                    ->where('question.domain_id', $domain->id)
-                    ->where('is_correct', '1')
-                    ->count();
+                $total = $filtered->count();
 
-                $wrong = $total - $correct;
+                $correct = $filtered->where('is_correct', '1')->count();
+
+                $wrong = $filtered->where('is_correct', '0')->count();
 
                 $percent = $total > 0
                     ? round(($correct / $total) * 100, 2)
@@ -633,7 +670,7 @@ class HomeController extends Controller
             $domainStats = collect([
                 'total' => $domainItems->sum('total'),
                 'correct' => $domainItems->sum('correct'),
-                'wrong' => $domainItems->sum('total') - $domainItems->sum('correct'),
+                'wrong' => $domainItems->sum('wrong'),
                 'percent' => $domainItems->sum('total') > 0
                     ? round(($domainItems->sum('correct') / $domainItems->sum('total')) * 100, 2)
                     : 0,
@@ -641,25 +678,24 @@ class HomeController extends Controller
             ]);
 
             /*
-        |--------------------------------------------------------------------------
-        | PROCESS GROUP STATS
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | PROCESS GROUP STATS
+            |--------------------------------------------------------------------------
+            */
             $processItems = ProcessGroup::where('is_active', 'active')->get()
-                ->map(function ($process) use ($answers, $userExam) {
+                ->map(function ($process) use ($answers) {
 
-                    $total = Question::where('process_group_id', $process->id)
-                        ->where('product_id', $userExam->exam_id)
-                        ->count();
+                    $filtered = $answers->where('question.process_group_id', $process->id);
 
-                    $correct = $answers
-                        ->where('question.process_group_id', $process->id)
-                        ->where('is_correct', '1')
-                        ->count();
+                    $total = $filtered->count();
 
-                    $wrong = $total - $correct;
+                    $correct = $filtered->where('is_correct', '1')->count();
 
-                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+                    $wrong = $filtered->where('is_correct', '0')->count();
+
+                    $percent = $total > 0
+                        ? round(($correct / $total) * 100, 2)
+                        : 0;
 
                     return [
                         'name' => $process->name,
@@ -673,7 +709,7 @@ class HomeController extends Controller
             $processStats = collect([
                 'total' => $processItems->sum('total'),
                 'correct' => $processItems->sum('correct'),
-                'wrong' => $processItems->sum('total') - $processItems->sum('correct'),
+                'wrong' => $processItems->sum('wrong'),
                 'percent' => $processItems->sum('total') > 0
                     ? round(($processItems->sum('correct') / $processItems->sum('total')) * 100, 2)
                     : 0,
@@ -681,25 +717,24 @@ class HomeController extends Controller
             ]);
 
             /*
-        |--------------------------------------------------------------------------
-        | TOPIC STATS
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | TOPIC STATS
+            |--------------------------------------------------------------------------
+            */
             $topicItems = Topic::where('is_active', 'active')->get()
-                ->map(function ($topic) use ($answers, $userExam) {
+                ->map(function ($topic) use ($answers) {
 
-                    $total = Question::where('topic_id', $topic->id)
-                        ->where('product_id', $userExam->exam_id)
-                        ->count();
+                    $filtered = $answers->where('question.topic_id', $topic->id);
 
-                    $correct = $answers
-                        ->where('question.topic_id', $topic->id)
-                        ->where('is_correct', '1')
-                        ->count();
+                    $total = $filtered->count();
 
-                    $wrong = $total - $correct;
+                    $correct = $filtered->where('is_correct', '1')->count();
 
-                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+                    $wrong = $filtered->where('is_correct', '0')->count();
+
+                    $percent = $total > 0
+                        ? round(($correct / $total) * 100, 2)
+                        : 0;
 
                     return [
                         'name' => $topic->name,
@@ -713,7 +748,7 @@ class HomeController extends Controller
             $topicStats = collect([
                 'total' => $topicItems->sum('total'),
                 'correct' => $topicItems->sum('correct'),
-                'wrong' => $topicItems->sum('total') - $topicItems->sum('correct'),
+                'wrong' => $topicItems->sum('wrong'),
                 'percent' => $topicItems->sum('total') > 0
                     ? round(($topicItems->sum('correct') / $topicItems->sum('total')) * 100, 2)
                     : 0,
@@ -721,25 +756,24 @@ class HomeController extends Controller
             ]);
 
             /*
-        |--------------------------------------------------------------------------
-        | APPROACH STATS
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | APPROACH STATS
+            |--------------------------------------------------------------------------
+            */
             $approachItems = Approach::where('is_active', 'active')->get()
-                ->map(function ($approach) use ($answers, $userExam) {
+                ->map(function ($approach) use ($answers) {
 
-                    $total = Question::where('approach_id', $approach->id)
-                        ->where('product_id', $userExam->exam_id)
-                        ->count();
+                    $filtered = $answers->where('question.approach_id', $approach->id);
 
-                    $correct = $answers
-                        ->where('question.approach_id', $approach->id)
-                        ->where('is_correct', '1')
-                        ->count();
+                    $total = $filtered->count();
 
-                    $wrong = $total - $correct;
+                    $correct = $filtered->where('is_correct', '1')->count();
 
-                    $percent = $total > 0 ? round(($correct / $total) * 100, 2) : 0;
+                    $wrong = $filtered->where('is_correct', '0')->count();
+
+                    $percent = $total > 0
+                        ? round(($correct / $total) * 100, 2)
+                        : 0;
 
                     return [
                         'name' => $approach->name,
@@ -753,14 +787,12 @@ class HomeController extends Controller
             $approachStats = collect([
                 'total' => $approachItems->sum('total'),
                 'correct' => $approachItems->sum('correct'),
-                'wrong' => $approachItems->sum('total') - $approachItems->sum('correct'),
+                'wrong' => $approachItems->sum('wrong'),
                 'percent' => $approachItems->sum('total') > 0
                     ? round(($approachItems->sum('correct') / $approachItems->sum('total')) * 100, 2)
                     : 0,
                 'items' => $approachItems->values(),
             ]);
-
-            // dd($domainStats);
 
             return view('frontend.pages.exams.exam-stat', compact(
                 'userExam',
@@ -768,10 +800,14 @@ class HomeController extends Controller
                 'processStats',
                 'topicStats',
                 'approachStats',
-                'firstAns',
+                'firstAns'
             ));
         } catch (\Throwable $th) {
-            Log::error('Exam Stat Page Failed', ['error' => $th->getMessage()]);
+
+            Log::error('Exam Stat Page Failed', [
+                'error' => $th->getMessage()
+            ]);
+
             return back()->with('error', "Something went wrong!");
         }
     }
@@ -796,6 +832,122 @@ class HomeController extends Controller
             Log::error('Exam Page Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
             throw $th;
+        }
+    }
+
+    public function checkout($pricing)
+    {
+        try {
+            $pricing = Pricing::where('is_active', 'active')->where('slug', $pricing)->first();
+            $countries = Country::where('is_active', 'active')->get();
+            $billing = UserBilling::where('user_id', Auth::id())->first();
+            return view('frontend.pages.checkout', compact('pricing', 'countries', 'billing'));
+        } catch (\Throwable $th) {
+            Log::error('Checkout Page Failed', ['error' => $th->getMessage()]);
+            return redirect()->back()->with('error', "Something went wrong! Please try again later");
+            throw $th;
+        }
+    }
+
+    public function processCheckout(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pricing_id' => 'required|exists:pricings,id',
+            'amount' => 'required|numeric|min:0',
+            'firstName' => 'required|string|min:2|max:100',
+            'lastName' => 'required|string|min:2|max:100',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'country' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'zip' => 'required|string|max:20',
+            'address' => 'required|string',
+            'payment_method' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Checkout Validation Failed', ['errors' => $validator->errors()]);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Validation Error!');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $pricing = Pricing::findOrFail($request->pricing_id);
+
+            $userBilling = UserBilling::where('user_id', Auth::id())->first();
+            if (!$userBilling) {
+                $userBilling = new UserBilling();
+                $userBilling->user_id = Auth::id();
+            }
+            $userBilling->first_name = $request->firstName;
+            $userBilling->last_name = $request->lastName;
+            $userBilling->email = $request->email;
+            $userBilling->phone = $request->phone;
+            $userBilling->country = $request->country;
+            $userBilling->state = $request->state;
+            $userBilling->city = $request->city;
+            $userBilling->zip = $request->zip;
+            $userBilling->address = $request->address;
+            $userBilling->save();
+
+            $transaction = new Transaction();
+            $transaction->user_id = Auth::id();
+            $transaction->money_flow = 'out';
+            $transaction->amount = $request->amount;
+            $transaction->transaction_id = 'trx_' . Str::upper(Str::random(10));
+            $transaction->description = 'Payment for pricing: ' . $pricing->name;
+            $transaction->status = 'pending';
+            $transaction->save();
+
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $request->amount * 100,
+                'currency' => 'usd',
+                'payment_method' => $request->payment_method,
+                'confirm' => true,
+                'automatic_payment_methods' => [
+                    'enabled' => true,
+                    'allow_redirects' => 'never',
+                ],
+            ]);
+
+            if ($paymentIntent->status == 'succeeded') {
+                $transaction->status = 'paid';
+                $transaction->save();
+
+                $userPricing = new UserPricing();
+                $userPricing->user_id = Auth::id();
+                $userPricing->pricing_id = $pricing->id;
+                $userPricing->transaction_id = $transaction->id;
+                $userPricing->start_date = Carbon::now();
+                if ($pricing->type == 'monthly') {
+                    $userPricing->end_date = Carbon::now()->addMonth($pricing->duration);
+                } elseif ($pricing->type == 'yearly') {
+                    $userPricing->end_date = Carbon::now()->addYear($pricing->duration);
+                } else {
+                    $userPricing->end_date = Carbon::now()->addDays($pricing->duration);
+                }
+                $userPricing->save();
+
+                DB::commit();
+                return redirect()->route('frontend.thank.you', ['pricing' => $userPricing->id])->with('success', 'Payment processed successfully!');
+            } else {
+                $transaction->status = 'failed';
+                $transaction->save();
+                DB::rollBack();
+                Log::error('Stripe Payment Failed', ['payment_intent' => $paymentIntent]);
+                return redirect()->back()->with('error', 'Payment failed! Please try again.');
+            }
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error('Checkout Error: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong while processing the payment!');
         }
     }
 

@@ -88,6 +88,7 @@
 <!-- Vendors -->
 <script src="{{ asset('frontAssets/vendor/tiny-slider/tiny-slider.js') }}"></script>
 <script src="{{ asset('frontAssets/vendor/glightbox/js/glightbox.js') }}"></script>
+<script src="{{ asset('frontAssets/vendor/choices/js/choices.min.js') }}"></script>
 
 <!-- Template Functions -->
 <script src="{{ asset('frontAssets/js/functions.js') }}"></script>

@@ -69,7 +69,11 @@ class LoginController extends Controller
                         $user = Auth::user();
 
                         if ($userfind->hasRole('user') || $userfind->hasRole('business')) {
-                            return redirect()->route('frontend.home')->with('success', 'Login successfully!');
+                            if ($request->pricing) {
+                                return redirect()->route('frontend.checkout', $request->pricing)->with('success', 'Login successfully!');
+                            } else {
+                                return redirect()->route('frontend.home')->with('success', 'Login successfully!');
+                            }
                         }
 
                         // default (admin ya koi aur role)

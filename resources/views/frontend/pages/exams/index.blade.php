@@ -445,7 +445,6 @@
                                     @php
                                         $pairs = $currentQuestion->question->matchPairs;
 
-                                        // 🔥 SAFE DECODE
                                         $savedPairs = json_decode($currentQuestion->matched_pairs ?? '{}', true);
                                         if (!is_array($savedPairs)) {
                                             $savedPairs = [];
@@ -454,8 +453,11 @@
                                         $allLeftItems = $pairs->pluck('left_item')->toArray();
                                         $usedLeftItems = array_keys($savedPairs);
 
-                                        // 🔥 LEFT ITEMS (never vanish fix)
                                         $leftItems = array_diff($allLeftItems, $usedLeftItems);
+
+                                        // 🔥 SHUFFLE HERE
+                                        $leftItems = array_values($leftItems); // reset keys
+                                        shuffle($leftItems);
                                     @endphp
 
                                     <div class="row">

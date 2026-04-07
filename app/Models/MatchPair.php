@@ -8,4 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class MatchPair extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'question_id',
+        'left_item',
+        'right_item'
+    ];
 }

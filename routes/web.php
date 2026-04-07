@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Dashboard\ApproachController;
 use App\Http\Controllers\Dashboard\DomainController;
+use App\Http\Controllers\Dashboard\ExamController;
 use App\Http\Controllers\Dashboard\HomeController;
 use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\ProcessGroupController;
@@ -163,6 +164,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('questions', QuestionController::class);
             Route::get('questions/status/{id}', [QuestionController::class, 'updateStatus'])->name('questions.status.update');
 
+            // Exam Routes
+            Route::resource('exams', ExamController::class);
+            Route::get('exams/status/{id}', [ExamController::class, 'updateStatus'])->name('exams.status.update');
+            Route::get('exams/questions/{id}', [ExamController::class, 'showQuestions'])->name('exams.questions');
+            Route::put('exams/questions/{id}', [ExamController::class, 'updateQuestions'])->name('exams.questions.update');
+            Route::post('exams/questions/random/{id}', [ExamController::class, 'assignRandomQuestions'])->name('exams.questions.random');
+
         });
     });
 });
@@ -174,6 +182,7 @@ Route::name('frontend.')->group(function () {
     Route::post('/contact/submit', [FrontendHomeController::class, 'contactSubmit'])->name('contact.submit');
     Route::get('/thank-you', [FrontendHomeController::class, 'thankYou'])->name('thank.you');
     Route::get('/try-demo', [FrontendHomeController::class, 'tryDemo'])->name('try.demo');
+    Route::get('/pricings', [FrontendHomeController::class, 'pricings'])->name('pricings');
     Route::post('/submit-demo', [FrontendHomeController::class, 'submitDemo'])->name('submit.demo');
     Route::middleware(['auth'])->group(function () {
         Route::get('/exam/{exam_slug}/{user_exam_id}/{question_id}', [FrontendHomeController::class, 'exam'])->name('exam');
@@ -187,8 +196,12 @@ Route::name('frontend.')->group(function () {
         Route::post('/score/submit', [FrontendHomeController::class, 'scoreSubmit'])->name('score.submit');
         Route::get('/stats/exam/{user_exam_id}', [FrontendHomeController::class, 'examStat'])->name('exam.stat');
         Route::get('/exam/review/{exam_slug}/{user_exam_id}/{question_id}', [FrontendHomeController::class, 'examReview'])->name('exam.review');
+        Route::get('/checkout/{pricing}', [FrontendHomeController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/process', [FrontendHomeController::class, 'processCheckout'])->name('checkout.process');
     });
 });
+
+Route::get('/get-states/{country_id}', [HomeController::class, 'getStates'])->name('get.states');
 
 
 //Artisan Routes

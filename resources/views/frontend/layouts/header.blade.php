@@ -162,7 +162,7 @@
                             <a class="avatar avatar-sm p-0" href="#" id="profileDropdown" role="button"
                                 data-bs-auto-close="outside" data-bs-display="static" data-bs-toggle="dropdown"
                                 aria-expanded="false">
-                                <img class="avatar-img rounded-circle" src="{{ 'frontAssets/images/avatar/01.jpg' }}"
+                                <img class="avatar-img rounded-circle" src="{{ asset('frontAssets/images/avatar/01.jpg') }}"
                                     alt="avatar">
                             </a>
                             <ul class="dropdown-menu dropdown-animation dropdown-menu-end shadow pt-3"
@@ -173,7 +173,7 @@
                                         <!-- Avatar -->
                                         <div class="avatar me-3">
                                             <img class="avatar-img rounded-circle shadow"
-                                                src="{{ Auth::user()->image ?? 'frontAssets/images/avatar/01.jpg' }}" alt="avatar">
+                                                src="{{ asset(Auth::user()->image ?? 'frontAssets/images/avatar/01.jpg') }}" alt="avatar">
                                         </div>
                                         <div>
                                             <a class="h6" href="#">{{ Auth::user()->name }}</a>

@@ -96,7 +96,7 @@
     role="alert" id="cookieBox" style="display: none;">
 
     <div class="text-dark text-center">
-        <img src="{{ 'frontAssets/images/element/27.svg' }}" class="h-50px mb-3" alt="cookie">
+        <img src="{{ asset('frontAssets/images/element/27.svg') }}" class="h-50px mb-3" alt="cookie">
 
         <p class="mb-0">
             This website stores cookies on your computer. To find out more about the cookies we use,

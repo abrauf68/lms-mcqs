@@ -24,34 +24,28 @@ class RegisterController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         } else {
-            return view('auth.register');
+            return view('frontend.pages.auth.register');
         }
     }
 
-    public function register_attempt(Request $request){
-    
+    public function register_attempt(Request $request)
+    {
+        // dd($request->all());
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => [
-                'required',
-                Password::min(8)
-                ->letters()
-                ->mixedCase()
-                ->numbers()
-                ->symbols()
-            ],
-            'confirm-password' => 'required|same:password',
-            'terms' => 'required|string|max:255',
+            'password' => ['required','min:8'],
+            'password_confirmation' => 'required|same:password',
+            'terms' => 'required|in:on',
         ];
-        
+
         // Make 'g-recaptcha-response' nullable if CAPTCHA is not enabled
         if (config('captcha.version') !== 'no_captcha') {
             $rules['g-recaptcha-response'] = 'required|captcha';
         } else {
             $rules['g-recaptcha-response'] = 'nullable';
         }
-        
+
         $validate = Validator::make($request->all(), $rules);
         if($validate->fails()){
             return Redirect::back()->withErrors($validate)->withInput($request->all())->with('error', 'Validation Error!');
@@ -64,7 +58,7 @@ class RegisterController extends Controller
             $user->email = $request->email;
             $user->password = Hash::make($request->password);
 
-            
+
             $username = $this->generateUsername($request->name);
 
             while (User::where('username', $username)->exists()) {
@@ -72,7 +66,7 @@ class RegisterController extends Controller
             }
             $user->username = $username;
             $user->save();
-    
+
             $user->syncRoles('user');
 
             $profile = new Profile();
@@ -82,23 +76,27 @@ class RegisterController extends Controller
 
             // Attempt to authenticate
             Auth::attempt(['email' => $request->email, 'password' => $request->password]);
-            
-            if (Auth::check()) {
 
-                VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
-                    return (new MailMessage)
-                        ->subject('Verify Email Address')
-                        ->line('Click the button below to verify your email address.')
-                        ->action('Verify Email Address', $url);
-                });
+            // if (Auth::check()) {
+
+            //     VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+            //         return (new MailMessage)
+            //             ->subject('Verify Email Address')
+            //             ->line('Click the button below to verify your email address.')
+            //             ->action('Verify Email Address', $url);
+            //     });
+            // }
+            // app('notificationService')->notifyUsers([$user], 'Welcome to ' . Helper::getCompanyName());
+            // $user->sendEmailVerificationNotification();
+
+            if ($request->pricing) {
+                DB::commit();
+                return redirect()->route('frontend.checkout', ['pricing' => $request->pricing])->with('success', 'Your account has been created successfully. Please proceed to checkout.');
             }
-            app('notificationService')->notifyUsers([$user], 'Welcome to ' . Helper::getCompanyName());
-            $user->sendEmailVerificationNotification();
-    
+
             // Commit the transaction
             DB::commit();
-
-            return redirect()->route('login')->with('success','Your account has been created successfully.');
+            return redirect()->route('frontend.home')->with('success','Your account has been created successfully.');
         } catch (\Throwable $th) {
             DB::rollback();
             // Log the error for debugging

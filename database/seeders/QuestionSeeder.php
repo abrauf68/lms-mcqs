@@ -175,8 +175,10 @@ class QuestionSeeder extends Seeder
             [
                 'question_id' => 5,
                 'image' => 'uploads/questions/hotspot/HS_15.png',
-                'x' => 20,
-                'y' => 50,
+                'x' => 14.50,
+                'y' => 9.03,
+                'width' => 20.66,
+                'height' => 79.90,
                 'radius' => 50,
             ],
         ];

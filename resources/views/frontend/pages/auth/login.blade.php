@@ -28,7 +28,7 @@
 
             <form method="POST" action="{{ route('login.attempt') }}">
                 @csrf
-
+                <input type="hidden" name="pricing" value="{{ request()->pricing }}">
                 {{-- Email --}}
                 <div class="mb-3">
                     <label class="form-label small">Email Address <span class="text-danger">*</span></label>
@@ -78,7 +78,11 @@
             <div class="text-center">
                 <p class="small mb-0">
                     Don't have an account?
-                    <a href="#" class="text-decoration-none fw-semibold">Sign Up</a>
+                    @if (request()->pricing)
+                        <a href="{{ route('register') }}?pricing={{ request()->pricing }}" class="text-decoration-none fw-semibold">Sign Up</a>
+                    @else
+                        <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Sign Up</a>
+                    @endif
                 </p>
             </div>
 

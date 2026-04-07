@@ -8,4 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Hotspot extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'question_id',
+        'image',
+        'x',
+        'y',
+        'width',
+        'height',
+        'radius',
+    ];
 }

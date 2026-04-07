@@ -384,165 +384,61 @@
             <div class="row g-4">
 
                 <!-- Pricing item START -->
-                <div class="col-md-6 col-xl-4">
-                    <div class="card border rounded-3 p-2 p-sm-4 h-100">
-                        <!-- Card Header -->
-                        <div class="card-header p-0">
-                            <!-- Price and Info -->
-                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-2">
-                                <!-- Info -->
-                                <div>
-                                    <h5 class="mb-0">Basic</h5>
-                                    <div class="badge text-bg-dark mb-0 rounded-pill">Most popular</div>
+                @if (isset($pricings) && count($pricings) > 0)
+                    @foreach ($pricings as $pricing)
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card border rounded-3 p-2 p-sm-4 h-100">
+                                <!-- Card Header -->
+                                <div class="card-header p-0">
+                                    <!-- Price and Info -->
+                                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-2">
+                                        <!-- Info -->
+                                        <div>
+                                            <h5 class="mb-0">{{ $pricing->name }}</h5>
+                                            <div class="badge text-bg-dark mb-0 rounded-pill">{{ $pricing->tag }}</div>
+                                        </div>
+                                        <!-- Price -->
+                                        <div>
+                                            <h4 class="text-success mb-0 plan-price">{{ \App\Helpers\Helper::formatCurrency($pricing->price) }}</h4>
+                                            <p class="small mb-0">/ {{ $pricing->duration }} {{ $pricing->type == 'yearly' ? 'Year' : 'Month' }}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <!-- Price -->
-                                <div>
-                                    <h4 class="text-success mb-0 plan-price">$20</h4>
-                                    <p class="small mb-0">/ month</p>
+
+                                <!-- Divider -->
+                                <div class="position-relative my-3 text-center">
+                                    <hr>
+                                    <p class="small position-absolute top-50 start-50 translate-middle bg-body px-3">
+                                        This plan include
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Divider -->
-                        <div class="position-relative my-3 text-center">
-                            <hr>
-                            <p class="small position-absolute top-50 start-50 translate-middle bg-body px-3">All plans
-                                included</p>
-                        </div>
-
-                        <!-- Card Body -->
-                        <div class="card-body pt-0">
-                            <ul class="list-unstyled mt-2 mb-0">
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Up to
-                                    05 users monthly</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Free 5
-                                    host &amp; domain</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Custom
-                                    infrastructure</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Access
-                                    to all our room</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-x-octagon-fill text-danger me-2"></i>24/7
-                                    dedicated Support</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-x-octagon-fill text-danger me-2"></i>Unlimited
-                                    updates</li>
-                                <li class="h6 fw-light"><i class="bi bi-x-octagon-fill text-danger me-2"></i>Landing pages
-                                    &amp; Web widgets</li>
-                            </ul>
-                        </div>
-                        <!-- Card Footer -->
-                        <div class="card-footer text-center d-grid pb-0">
-                            <button type="button" class="btn btn-light mb-0">Get Started</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Pricing item END -->
-
-                <!-- Pricing item START -->
-                <div class="col-md-6 col-xl-4">
-                    <div class="card border rounded-3 p-2 p-sm-4 h-100">
-                        <!-- Card Header -->
-                        <div class="card-header p-0">
-                            <!-- Price and Info -->
-                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-2">
-                                <!-- Info -->
-                                <div>
-                                    <h5 class="mb-0">Professional</h5>
-                                    <div class="badge bg-grad mb-0 rounded-pill">Recommended</div>
+                                <!-- Card Body -->
+                                <div class="card-body pt-0 m-0 p-0">
+                                    <ul class="list-unstyled mt-2 mb-0">
+                                        @php
+                                            $features = json_decode($pricing->features)
+                                        @endphp
+                                        @foreach ($features as $feature)
+                                            <li class="mb-3 h6 fw-light">
+                                                <i class="bi bi-patch-check-fill text-success me-2"></i>
+                                                {{ $feature }}
+                                            </li>
+                                        @endforeach
+                                    </ul>
                                 </div>
-                                <!-- Price -->
-                                <div>
-                                    <h4 class="text-success mb-0 plan-price">$59</h4>
-                                    <p class="small mb-0">/ month</p>
+                                <!-- Card Footer -->
+                                <div class="card-footer text-center d-grid pb-0">
+                                    @if (Auth::check())
+                                        <a href="{{ route('frontend.checkout', ['pricing' => $pricing->slug]) }}" class="btn btn-dark mb-0">Get Started</a>
+                                    @else
+                                        <a href="{{ route('register', ['pricing' => $pricing->slug]) }}" class="btn btn-dark mb-0">Get Started</a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Divider -->
-                        <div class="position-relative my-3 text-center">
-                            <hr>
-                            <p class="small position-absolute top-50 start-50 translate-middle bg-body px-3">All plans
-                                included</p>
-                        </div>
-
-                        <!-- Card Body -->
-                        <div class="card-body pt-0">
-                            <ul class="list-unstyled mt-2 mb-0">
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Up to
-                                    05 users monthly</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Free 5
-                                    host &amp; domain</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Custom
-                                    infrastructure</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Access
-                                    to all our room</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>24/7
-                                    dedicated Support</li>
-                                <li class="mb-3 h6 fw-light"><i
-                                        class="bi bi-x-octagon-fill text-danger me-2"></i>Unlimited updates</li>
-                                <li class="h6 fw-light"><i class="bi bi-x-octagon-fill text-danger me-2"></i>Landing pages
-                                    &amp; Web widgets</li>
-                            </ul>
-                        </div>
-                        <!-- Card Footer -->
-                        <div class="card-footer text-center d-grid pb-0">
-                            <button type="button" class="btn btn-dark mb-0">Get Started</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Pricing item END -->
-
-                <!-- Pricing item START -->
-                <div class="col-md-6 col-xl-4">
-                    <div class="card border rounded-3 p-2 p-sm-4 h-100">
-                        <!-- Card Header -->
-                        <div class="card-header p-0">
-                            <!-- Price and Info -->
-                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-2">
-                                <!-- Info -->
-                                <div>
-                                    <h5 class="mb-0">Premium</h5>
-                                    <div class="badge text-bg-dark mb-0 rounded-pill">Best value</div>
-                                </div>
-                                <!-- Price -->
-                                <div>
-                                    <h4 class="text-success mb-0 plan-price">$99</h4>
-                                    <p class="small mb-0">/ month</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Divider -->
-                        <div class="position-relative my-3 text-center">
-                            <hr>
-                            <p class="small position-absolute top-50 start-50 translate-middle bg-body px-3">All plans
-                                included</p>
-                        </div>
-
-                        <!-- Card Body -->
-                        <div class="card-body pt-0">
-                            <ul class="list-unstyled mt-2 mb-0">
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Up to
-                                    05 users monthly</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Free
-                                    5 host &amp; domain</li>
-                                <li class="mb-3 h6 fw-light"><i
-                                        class="bi bi-patch-check-fill text-success me-2"></i>Custom infrastructure</li>
-                                <li class="mb-3 h6 fw-light"><i
-                                        class="bi bi-patch-check-fill text-success me-2"></i>Access to all our room</li>
-                                <li class="mb-3 h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>24/7
-                                    dedicated Support</li>
-                                <li class="mb-3 h6 fw-light"><i
-                                        class="bi bi-patch-check-fill text-success me-2"></i>Unlimited updates</li>
-                                <li class="h6 fw-light"><i class="bi bi-patch-check-fill text-success me-2"></i>Landing
-                                    pages &amp; Web widgets</li>
-                            </ul>
-                        </div>
-                        <!-- Card Footer -->
-                        <div class="card-footer text-center d-grid pb-0">
-                            <button type="button" class="btn btn-light mb-0">Get Started</button>
-                        </div>
-                    </div>
-                </div>
+                    @endforeach
+                @endif
                 <!-- Pricing item END -->
             </div>
             <!-- Row END -->

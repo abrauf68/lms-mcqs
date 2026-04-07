@@ -82,6 +82,14 @@
                 </a>
             </li>
         @endcan
+        @can(['view exam'])
+            <li class="menu-item {{ request()->routeIs('dashboard.exams.*') ? 'active' : '' }}">
+                <a href="{{ route('dashboard.exams.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-clipboard-check"></i>
+                    <div>{{__('Exams')}}</div>
+                </a>
+            </li>
+        @endcan
         @canany(['view user', 'view archived user'])
             <li class="menu-item {{ request()->routeIs('dashboard.user.*') || request()->routeIs('dashboard.archived-user.*') ? 'open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">

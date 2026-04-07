@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\State;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -61,5 +62,14 @@ class HomeController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function getStates($country_id)
+    {
+        return State::where('country_id', $country_id)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->where('is_active', 'active')
+            ->get();
     }
 }

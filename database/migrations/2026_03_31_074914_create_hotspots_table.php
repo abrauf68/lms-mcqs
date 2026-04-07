@@ -16,8 +16,10 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained('questions')->cascadeOnDelete();
             $table->string('hotspot_text')->nullable();
             $table->string('image')->nullable();
-            $table->integer('x'); // X coordinate
-            $table->integer('y'); // Y coordinate
+            $table->float('x');
+            $table->float('y');
+            $table->float('width')->default(10);
+            $table->float('height')->default(10);
             $table->integer('radius')->default(10); // clickable area
             $table->timestamps();
         });

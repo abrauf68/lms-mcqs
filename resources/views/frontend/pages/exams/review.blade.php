@@ -88,11 +88,11 @@
         }
 
         /* .option-item:hover {
-                                background: #f6fafe;
-                                border-color: #0d6efd;
-                                transform: translateX(6px);
-                                box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.1);
-                            } */
+                                    background: #f6fafe;
+                                    border-color: #0d6efd;
+                                    transform: translateX(6px);
+                                    box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.1);
+                                } */
 
         .form-check-input:checked+.form-check-label {
             font-weight: 700;
@@ -716,6 +716,7 @@
 
                                     // check if user click inside box
                                     $isCorrect = false;
+
                                     if ($userX !== null && $boxX !== null) {
                                         $isCorrect =
                                             $userX >= $boxX &&
@@ -745,7 +746,8 @@
                                             @endif
                                         </div>
 
-                                        <div class="w-100 p-2
+                                        <div
+                                            class="w-100 p-2
                                             @if ($isCorrect) bg-light-success
                                             @elseif($userX !== null && !$isCorrect) bg-light-danger @endif
                                         ">
@@ -769,7 +771,8 @@
 
                                         <!-- 🟩 CORRECT BOX -->
                                         @if ($boxX !== null)
-                                            <div style="
+                                            <div
+                                                style="
                                                 position:absolute;
                                                 left: {{ $boxX }}%;
                                                 top: {{ $boxY }}%;
@@ -777,12 +780,14 @@
                                                 height: {{ $boxHeight }}%;
                                                 background: rgba(0,255,0,0.3);
                                                 border: 2px solid green;
-                                            "></div>
+                                            ">
+                                            </div>
                                         @endif
 
                                         <!-- 🔴 USER CLICK -->
                                         @if ($userX !== null)
-                                            <div style="
+                                            <div
+                                                style="
                                                 position:absolute;
                                                 left: {{ $userX }}%;
                                                 top: {{ $userY }}%;
@@ -791,10 +796,12 @@
                                                 background:red;
                                                 border-radius:50%;
                                                 transform: translate(-50%, -50%);
-                                            "></div>
+                                            ">
+                                            </div>
 
                                             <!-- YOUR ANSWER BADGE (directly above marker) -->
-                                            <div class="your-answer-badge" style="
+                                            <div class="your-answer-badge"
+                                                style="
                                                 position:absolute;
                                                 left: {{ $userX - 10 }}%;
                                                 top: calc({{ $userY + 2 }}% - 25px); /* badge upar marker ke */
@@ -810,6 +817,21 @@
 
                             @endif
                             <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-2">
+                                <div class="alert alert-warning border-0 shadow-sm mt-3" role="alert"
+                                    style="width: 100%; border-left: 5px solid #ffc107; border-radius: 10px;">
+
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-exclamation-triangle fa-lg me-2 text-dark"></i>
+                                        <h5 class="mb-0 fw-bold text-dark">Explanation</h5>
+                                    </div>
+
+                                    <hr class="my-2">
+
+                                    <div class="ps-1 text-dark" style="line-height: 1.6;">
+                                        {!! $currentQuestion->question->ans_explanation !!}
+                                    </div>
+
+                                </div>
                                 <div></div>
                                 @php
                                     $questionsArray = $userExamQuestions->values(); // reset index

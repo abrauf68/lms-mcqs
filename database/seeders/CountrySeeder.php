@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Country;
+use App\Models\State;
+use Illuminate\Support\Facades\File;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -260,9 +262,36 @@ class CountrySeeder extends Seeder
             ['name' => 'Zambia', 'code' => 'ZM', 'phone_code' => '+260', 'phone_number_limit' => 9],
             ['name' => 'Zimbabwe', 'code' => 'ZW', 'phone_code' => '+263', 'phone_number_limit' => 9]
         ];
-        
+
         foreach ($countries as $country) {
             Country::create($country);
+        }
+
+        $json = File::get(database_path('data/states.json'));
+        $states = json_decode($json, true);
+
+        $insertData = [];
+
+        foreach ($states as $state) {
+
+            // Find country using country_code (VERY IMPORTANT)
+            $country = Country::where('code', $state['country_code'])->first();
+
+            if (!$country) {
+                continue; // skip if country not found
+            }
+
+            $insertData[] = [
+                'country_id' => $country->id,
+                'name' => $state['name'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Bulk insert (FAST)
+        foreach (array_chunk($insertData, 500) as $chunk) {
+            State::insert($chunk);
         }
     }
 }

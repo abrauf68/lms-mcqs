@@ -9,6 +9,7 @@
 <link rel="stylesheet" type="text/css" href="{{asset('frontAssets/vendor/bootstrap-icons/bootstrap-icons.css')}}">
 <link rel="stylesheet" type="text/css" href="{{asset('frontAssets/vendor/tiny-slider/tiny-slider.css')}}">
 <link rel="stylesheet" type="text/css" href="{{asset('frontAssets/vendor/glightbox/css/glightbox.css')}}">
+<link rel="stylesheet" type="text/css" href="{{asset('frontAssets/vendor/choices/css/choices.min.css')}}">
 
 <!-- Theme CSS -->
 <link rel="stylesheet" type="text/css" href="{{asset('frontAssets/css/style.css')}}">
