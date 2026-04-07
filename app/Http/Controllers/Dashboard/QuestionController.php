@@ -70,7 +70,7 @@ class QuestionController extends Controller
             $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
                 ->orderBy('id', 'desc');
 
-            return DataTables::of($data)
+            return DataTables::eloquent($data)
                 ->addIndexColumn()
 
                 ->editColumn('question_text', function ($row) {
