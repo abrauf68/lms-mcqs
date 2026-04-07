@@ -34,7 +34,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div class="content-left">
-                                <span class="text-heading">{{ __('Users') }}</span>
+                                <span class="text-heading">{{ __('Total') }}</span>
                                 <div class="d-flex align-items-center my-1">
                                     <h4 class="mb-0 me-2">{{ $totalUsers }}</h4>
                                 </div>
@@ -54,7 +54,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div class="content-left">
-                                <span class="text-heading">{{ __('Deactivated Users') }}</span>
+                                <span class="text-heading">{{ __('Deactivate') }}</span>
                                 <div class="d-flex align-items-center my-1">
                                     <h4 class="mb-0 me-2">
                                         {{ $totalDeactivatedUsers }}
@@ -76,7 +76,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div class="content-left">
-                                <span class="text-heading">{{ __('Active Users') }}</span>
+                                <span class="text-heading">{{ __('Active') }}</span>
                                 <div class="d-flex align-items-center my-1">
                                     <h4 class="mb-0 me-2">{{ $totalActiveUsers }}</h4>
                                 </div>
@@ -96,7 +96,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between">
                             <div class="content-left">
-                                <span class="text-heading">{{ __('Archived Users') }}</span>
+                                <span class="text-heading">{{ __('Archived') }}</span>
                                 <div class="d-flex align-items-center my-1">
                                     <h4 class="mb-0 me-2">{{ $totalArchivedUsers }}</h4>
                                 </div>

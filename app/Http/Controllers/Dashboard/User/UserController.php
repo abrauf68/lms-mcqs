@@ -27,7 +27,7 @@ class UserController extends Controller
     {
         $this->authorize('view user');
         try {
-            $users  = User::with('profile')->get();
+            $users = User::with('profile')->withoutRole('user')->get();
             $totalUsers = User::count();
             $totalDeactivatedUsers = User::where('is_active', 'inactive')->count();
             $totalActiveUsers = User::where('is_active', 'active')->count();
@@ -61,15 +61,7 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => [
-                'required',
-                'string',
-                Password::min(8)
-                    ->letters()
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-            ],
+            'password' => ['required','min:8'],
             'confirm-password' => 'required|same:password',
             'role' => 'required|exists:roles,name'
         ]);

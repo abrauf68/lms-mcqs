@@ -6,10 +6,12 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Dashboard\ApproachController;
+use App\Http\Controllers\Dashboard\ContactController;
 use App\Http\Controllers\Dashboard\DomainController;
 use App\Http\Controllers\Dashboard\ExamController;
 use App\Http\Controllers\Dashboard\HomeController;
 use App\Http\Controllers\Dashboard\NotificationController;
+use App\Http\Controllers\Dashboard\PricingController;
 use App\Http\Controllers\Dashboard\ProcessGroupController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProfileController;
@@ -171,8 +173,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('exams/questions/{id}', [ExamController::class, 'updateQuestions'])->name('exams.questions.update');
             Route::post('exams/questions/random/{id}', [ExamController::class, 'assignRandomQuestions'])->name('exams.questions.random');
 
+            // Pricing Routes
+            Route::resource('pricings', PricingController::class);
+            Route::get('pricings/status/{id}', [PricingController::class, 'updateStatus'])->name('pricings.status.update');
+
+            // Contact Routes
+            Route::resource('contacts', ContactController::class);
         });
     });
+    Route::get('questions/json', [QuestionController::class, 'json'])->name('questions.json');
 });
 
 // Frontend Pages Routes

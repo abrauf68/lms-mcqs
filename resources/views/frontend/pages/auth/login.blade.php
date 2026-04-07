@@ -32,8 +32,9 @@
                 {{-- Email --}}
                 <div class="mb-3">
                     <label class="form-label small">Email Address <span class="text-danger">*</span></label>
-                    <input type="email" name="email_username" class="form-control form-control-sm @error('email_username') is-invalid @enderror" value="{{ old('email_username') }}"
-                        required>
+                    <input type="email" name="email_username"
+                        class="form-control form-control-sm @error('email_username') is-invalid @enderror"
+                        value="{{ old('email_username') }}" required>
                     @error('email_username')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -44,7 +45,8 @@
                 {{-- Password --}}
                 <div class="mb-3">
                     <label class="form-label small">Password <span class="text-danger">*</span></label>
-                    <input type="password" name="password" class="form-control form-control-sm @error('password') is-invalid @enderror" required>
+                    <input type="password" name="password"
+                        class="form-control form-control-sm @error('password') is-invalid @enderror" required>
                     @error('password')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -61,7 +63,10 @@
                         </label>
                     </div>
 
-                    <a href="#" class="small text-decoration-none">Forgot?</a>
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}"
+                            class="small text-decoration-none">{{ __('Forgot Password?') }}</a>
+                    @endif
                 </div>
 
                 {{-- Submit --}}
@@ -79,7 +84,8 @@
                 <p class="small mb-0">
                     Don't have an account?
                     @if (request()->pricing)
-                        <a href="{{ route('register') }}?pricing={{ request()->pricing }}" class="text-decoration-none fw-semibold">Sign Up</a>
+                        <a href="{{ route('register') }}?pricing={{ request()->pricing }}"
+                            class="text-decoration-none fw-semibold">Sign Up</a>
                     @else
                         <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Sign Up</a>
                     @endif

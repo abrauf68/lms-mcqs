@@ -13,11 +13,13 @@ use App\Models\ProcessGroup;
 use App\Models\Product;
 use App\Models\Question;
 use App\Models\Topic;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class QuestionController extends Controller
 {
@@ -28,13 +30,96 @@ class QuestionController extends Controller
     {
         $this->authorize('view question');
         try {
-            $questions = Question::all();
-            return view('dashboard.questions.index', compact('questions'));
+            // $questions = Question::all();
+            return view('dashboard.questions.index');
         } catch (\Throwable $th) {
             Log::error('questions Index Failed', ['error' => $th->getMessage()]);
             return redirect()->back()->with('error', "Something went wrong! Please try again later");
             throw $th;
         }
+    }
+
+    public function json(Request $request)
+    {
+        if ($request->ajax()) {
+
+            $user = User::findOrFail(auth()->id());
+
+            $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
+                ->orderBy('id', 'desc');
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+
+                ->editColumn('question_text', function ($row) {
+                    return '<span title="'.$row->question_text.'">' .
+                        \Illuminate\Support\Str::limit($row->question_text, 25, '...') .
+                    '</span>';
+                })
+
+                ->editColumn('created_at', function ($row) {
+                    return \Carbon\Carbon::parse($row->created_at)->format('F d, Y');
+                })
+
+                ->addColumn('q_type', function ($row) {
+                    return ucwords(str_replace('_', ' ', $row->type));
+                })
+
+                ->addColumn('status', function ($row) {
+                    return $row->is_active == 'active'
+                        ? '<span class="badge bg-label-success">Active</span>'
+                        : '<span class="badge bg-label-danger">Inactive</span>';
+                })
+
+                ->addColumn('action', function ($row) use ($user) {
+
+                    $btn = '';
+
+                    // EDIT + STATUS
+                    if ($user->can('update question')) {
+
+                        $btn .= '<a href="' . route('dashboard.questions.edit', $row->id) . '" 
+                                class="btn btn-icon btn-text-primary rounded-pill me-1"
+                                title="Edit">
+                                <i class="ti ti-edit"></i>
+                             </a>';
+
+                        // STATUS BUTTON
+                        if ($row->is_active == 'active') {
+                            $icon = '<i class="ti ti-toggle-right text-success"></i>';
+                            $title = 'Deactivate';
+                        } else {
+                            $icon = '<i class="ti ti-toggle-left text-danger"></i>';
+                            $title = 'Activate';
+                        }
+
+                        $btn .= '<a href="' . route('dashboard.questions.status.update', $row->id) . '" 
+                                class="btn btn-icon btn-text-primary rounded-pill me-1"
+                                title="' . $title . '">
+                                ' . $icon . '
+                             </a>';
+                    }
+
+                    // DELETE
+                    if ($user->can('delete question')) {
+
+                        $btn .= '<form method="POST" action="' . route('dashboard.questions.destroy', $row->id) . '" style="display:inline-block;">
+                                ' . csrf_field() . method_field('DELETE') . '
+                                <button type="submit" class="btn btn-icon btn-text-danger rounded-pill delete_confirmation"
+                                    title="Delete">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                             </form>';
+                    }
+
+                    return $btn;
+                })
+
+                ->rawColumns(['question_text', 'status', 'action'])
+                ->make(true);
+        }
+
+        return response()->json(['error' => 'Invalid request'], 400);
     }
 
     /**

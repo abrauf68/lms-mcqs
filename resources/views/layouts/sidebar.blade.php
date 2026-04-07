@@ -90,6 +90,22 @@
                 </a>
             </li>
         @endcan
+        @can(['view pricing'])
+            <li class="menu-item {{ request()->routeIs('dashboard.pricings.*') ? 'active' : '' }}">
+                <a href="{{ route('dashboard.pricings.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-currency-dollar"></i>
+                    <div>{{__('Pricings')}}</div>
+                </a>
+            </li>
+        @endcan
+        @can(['view contact'])
+            <li class="menu-item {{ request()->routeIs('dashboard.contacts.*') ? 'active' : '' }}">
+                <a href="{{ route('dashboard.contacts.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-address-book"></i>
+                    <div>{{__('Contacts')}}</div>
+                </a>
+            </li>
+        @endcan
         @canany(['view user', 'view archived user'])
             <li class="menu-item {{ request()->routeIs('dashboard.user.*') || request()->routeIs('dashboard.archived-user.*') ? 'open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -100,7 +116,7 @@
                     @can(['view user'])
                         <li class="menu-item {{ request()->routeIs('dashboard.user.*') ? 'active' : '' }}">
                             <a href="{{route('dashboard.user.index')}}" class="menu-link">
-                                <div>{{__('All Users')}}</div>
+                                <div>{{__('Staff Users')}}</div>
                             </a>
                         </li>
                     @endcan
