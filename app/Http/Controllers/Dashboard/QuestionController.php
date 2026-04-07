@@ -43,8 +43,6 @@ class QuestionController extends Controller
     {
         if ($request->ajax()) {
 
-            $user = User::findOrFail(auth()->id());
-
             $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
                 ->orderBy('id', 'desc');
 
