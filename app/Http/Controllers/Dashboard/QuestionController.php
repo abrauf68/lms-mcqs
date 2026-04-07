@@ -43,6 +43,12 @@ class QuestionController extends Controller
     {
         if ($request->ajax()) {
 
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+
             $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
                 ->orderBy('id', 'desc');
 
@@ -50,9 +56,9 @@ class QuestionController extends Controller
                 ->addIndexColumn()
 
                 ->editColumn('question_text', function ($row) {
-                    return '<span title="'.$row->question_text.'">' .
+                    return '<span title="' . e($row->question_text) . '">' .
                         \Illuminate\Support\Str::limit($row->question_text, 25, '...') .
-                    '</span>';
+                        '</span>';
                 })
 
                 ->editColumn('created_at', function ($row) {
@@ -69,45 +75,40 @@ class QuestionController extends Controller
                         : '<span class="badge bg-label-danger">Inactive</span>';
                 })
 
-                ->addColumn('action', function ($row) {
+                ->addColumn('action', function ($row) use ($user) {
 
                     $btn = '';
 
-                    // EDIT + STATUS
-                    if (auth()->user()->can('update question')) {
+                    if ($user && $user->can('update question')) {
 
                         $btn .= '<a href="' . route('dashboard.questions.edit', $row->id) . '" 
-                                class="btn btn-icon btn-text-primary rounded-pill me-1"
-                                title="Edit">
-                                <i class="ti ti-edit"></i>
-                             </a>';
+                            class="btn btn-icon btn-text-primary rounded-pill me-1"
+                            title="Edit">
+                            <i class="ti ti-edit"></i>
+                         </a>';
 
-                        // STATUS BUTTON
-                        if ($row->is_active == 'active') {
-                            $icon = '<i class="ti ti-toggle-right text-success"></i>';
-                            $title = 'Deactivate';
-                        } else {
-                            $icon = '<i class="ti ti-toggle-left text-danger"></i>';
-                            $title = 'Activate';
-                        }
+                        $icon = $row->is_active == 'active'
+                            ? '<i class="ti ti-toggle-right text-success"></i>'
+                            : '<i class="ti ti-toggle-left text-danger"></i>';
+
+                        $title = $row->is_active == 'active' ? 'Deactivate' : 'Activate';
 
                         $btn .= '<a href="' . route('dashboard.questions.status.update', $row->id) . '" 
-                                class="btn btn-icon btn-text-primary rounded-pill me-1"
-                                title="' . $title . '">
-                                ' . $icon . '
-                             </a>';
+                            class="btn btn-icon btn-text-primary rounded-pill me-1"
+                            title="' . $title . '">
+                            ' . $icon . '
+                         </a>';
                     }
 
-                    // DELETE
-                    if (auth()->user()->can('delete question')) {
+                    if ($user && $user->can('delete question')) {
 
                         $btn .= '<form method="POST" action="' . route('dashboard.questions.destroy', $row->id) . '" style="display:inline-block;">
-                                ' . csrf_field() . method_field('DELETE') . '
-                                <button type="submit" class="btn btn-icon btn-text-danger rounded-pill delete_confirmation"
-                                    title="Delete">
-                                    <i class="ti ti-trash"></i>
-                                </button>
-                             </form>';
+                            ' . csrf_field() . method_field('DELETE') . '
+                            <button type="submit" class="btn btn-icon btn-text-danger rounded-pill delete_confirmation"
+                                title="Delete">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                         </form>';
                     }
 
                     return $btn;
