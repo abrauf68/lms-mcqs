@@ -41,85 +41,103 @@ class QuestionController extends Controller
 
     public function json(Request $request)
     {
-        if ($request->ajax()) {
+        try {
 
-            $user = auth()->user();
+            $data = \App\Models\Question::query();
 
-            if (!$user) {
-                return response()->json(['error' => 'Unauthenticated'], 401);
-            }
+            return DataTables::of($data)->make(true);
 
-            $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
-                ->orderBy('id', 'desc');
+        } catch (\Throwable $e) {
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-
-                ->editColumn('question_text', function ($row) {
-                    return '<span title="' . e($row->question_text) . '">' .
-                        \Illuminate\Support\Str::limit($row->question_text, 25, '...') .
-                        '</span>';
-                })
-
-                ->editColumn('created_at', function ($row) {
-                    return \Carbon\Carbon::parse($row->created_at)->format('F d, Y');
-                })
-
-                ->addColumn('q_type', function ($row) {
-                    return ucwords(str_replace('_', ' ', $row->type));
-                })
-
-                ->addColumn('status', function ($row) {
-                    return $row->is_active == 'active'
-                        ? '<span class="badge bg-label-success">Active</span>'
-                        : '<span class="badge bg-label-danger">Inactive</span>';
-                })
-
-                ->addColumn('action', function ($row) use ($user) {
-
-                    $btn = '';
-
-                    if ($user && $user->can('update question')) {
-
-                        $btn .= '<a href="' . route('dashboard.questions.edit', $row->id) . '" 
-                            class="btn btn-icon btn-text-primary rounded-pill me-1"
-                            title="Edit">
-                            <i class="ti ti-edit"></i>
-                         </a>';
-
-                        $icon = $row->is_active == 'active'
-                            ? '<i class="ti ti-toggle-right text-success"></i>'
-                            : '<i class="ti ti-toggle-left text-danger"></i>';
-
-                        $title = $row->is_active == 'active' ? 'Deactivate' : 'Activate';
-
-                        $btn .= '<a href="' . route('dashboard.questions.status.update', $row->id) . '" 
-                            class="btn btn-icon btn-text-primary rounded-pill me-1"
-                            title="' . $title . '">
-                            ' . $icon . '
-                         </a>';
-                    }
-
-                    if ($user && $user->can('delete question')) {
-
-                        $btn .= '<form method="POST" action="' . route('dashboard.questions.destroy', $row->id) . '" style="display:inline-block;">
-                            ' . csrf_field() . method_field('DELETE') . '
-                            <button type="submit" class="btn btn-icon btn-text-danger rounded-pill delete_confirmation"
-                                title="Delete">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                         </form>';
-                    }
-
-                    return $btn;
-                })
-
-                ->rawColumns(['question_text', 'status', 'action'])
-                ->make(true);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
         }
-
-        return response()->json(['error' => 'Invalid request'], 400);
     }
+
+    // public function json(Request $request)
+    // {
+    //     if ($request->ajax()) {
+
+    //         $user = auth()->user();
+
+    //         if (!$user) {
+    //             return response()->json(['error' => 'Unauthenticated'], 401);
+    //         }
+
+    //         $data = Question::select(['id', 'question_text', 'type', 'is_active', 'created_at'])
+    //             ->orderBy('id', 'desc');
+
+    //         return DataTables::of($data)
+    //             ->addIndexColumn()
+
+    //             ->editColumn('question_text', function ($row) {
+    //                 return '<span title="' . e($row->question_text) . '">' .
+    //                     \Illuminate\Support\Str::limit($row->question_text, 25, '...') .
+    //                     '</span>';
+    //             })
+
+    //             ->editColumn('created_at', function ($row) {
+    //                 return \Carbon\Carbon::parse($row->created_at)->format('F d, Y');
+    //             })
+
+    //             ->addColumn('q_type', function ($row) {
+    //                 return ucwords(str_replace('_', ' ', $row->type));
+    //             })
+
+    //             ->addColumn('status', function ($row) {
+    //                 return $row->is_active == 'active'
+    //                     ? '<span class="badge bg-label-success">Active</span>'
+    //                     : '<span class="badge bg-label-danger">Inactive</span>';
+    //             })
+
+    //             ->addColumn('action', function ($row) use ($user) {
+
+    //                 $btn = '';
+
+    //                 if ($user && $user->can('update question')) {
+
+    //                     $btn .= '<a href="' . route('dashboard.questions.edit', $row->id) . '" 
+    //                         class="btn btn-icon btn-text-primary rounded-pill me-1"
+    //                         title="Edit">
+    //                         <i class="ti ti-edit"></i>
+    //                      </a>';
+
+    //                     $icon = $row->is_active == 'active'
+    //                         ? '<i class="ti ti-toggle-right text-success"></i>'
+    //                         : '<i class="ti ti-toggle-left text-danger"></i>';
+
+    //                     $title = $row->is_active == 'active' ? 'Deactivate' : 'Activate';
+
+    //                     $btn .= '<a href="' . route('dashboard.questions.status.update', $row->id) . '" 
+    //                         class="btn btn-icon btn-text-primary rounded-pill me-1"
+    //                         title="' . $title . '">
+    //                         ' . $icon . '
+    //                      </a>';
+    //                 }
+
+    //                 if ($user && $user->can('delete question')) {
+
+    //                     $btn .= '<form method="POST" action="' . route('dashboard.questions.destroy', $row->id) . '" style="display:inline-block;">
+    //                         ' . csrf_field() . method_field('DELETE') . '
+    //                         <button type="submit" class="btn btn-icon btn-text-danger rounded-pill delete_confirmation"
+    //                             title="Delete">
+    //                             <i class="ti ti-trash"></i>
+    //                         </button>
+    //                      </form>';
+    //                 }
+
+    //                 return $btn;
+    //             })
+
+    //             ->rawColumns(['question_text', 'status', 'action'])
+    //             ->make(true);
+    //     }
+
+    //     return response()->json(['error' => 'Invalid request'], 400);
+    // }
 
     /**
      * Show the form for creating a new resource.
