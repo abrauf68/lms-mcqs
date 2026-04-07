@@ -71,12 +71,12 @@ class QuestionController extends Controller
                         : '<span class="badge bg-label-danger">Inactive</span>';
                 })
 
-                ->addColumn('action', function ($row) use ($user) {
+                ->addColumn('action', function ($row) {
 
                     $btn = '';
 
                     // EDIT + STATUS
-                    if ($user->can('update question')) {
+                    if (auth()->user()->can('update question')) {
 
                         $btn .= '<a href="' . route('dashboard.questions.edit', $row->id) . '" 
                                 class="btn btn-icon btn-text-primary rounded-pill me-1"
@@ -101,7 +101,7 @@ class QuestionController extends Controller
                     }
 
                     // DELETE
-                    if ($user->can('delete question')) {
+                    if (auth()->user()->can('delete question')) {
 
                         $btn .= '<form method="POST" action="' . route('dashboard.questions.destroy', $row->id) . '" style="display:inline-block;">
                                 ' . csrf_field() . method_field('DELETE') . '
