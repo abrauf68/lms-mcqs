@@ -114,6 +114,11 @@
                 </a>
                 <ul class="menu-sub">
                     @can(['view user'])
+                        <li class="menu-item {{ request()->routeIs('dashboard.customers.*') ? 'active' : '' }}">
+                            <a href="{{route('dashboard.customers.index')}}" class="menu-link">
+                                <div>{{__('Customers')}}</div>
+                            </a>
+                        </li>
                         <li class="menu-item {{ request()->routeIs('dashboard.user.*') ? 'active' : '' }}">
                             <a href="{{route('dashboard.user.index')}}" class="menu-link">
                                 <div>{{__('Staff Users')}}</div>

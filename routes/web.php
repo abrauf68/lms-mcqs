@@ -21,6 +21,7 @@ use App\Http\Controllers\Dashboard\RolePermission\RoleController;
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Dashboard\TopicController;
 use App\Http\Controllers\Dashboard\User\ArchivedUserController;
+use App\Http\Controllers\Dashboard\User\CustomerController;
 use App\Http\Controllers\Dashboard\User\UserController;
 use App\Http\Controllers\Frontend\HomeController as FrontendHomeController;
 use App\Http\Middleware\CheckAccountActivation;
@@ -127,6 +128,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('archived-user', ArchivedUserController::class);
             Route::get('user/restore/{id}', [ArchivedUserController::class, 'restoreUser'])->name('archived-user.restore');
             Route::get('user/status/{id}', [UserController::class, 'updateStatus'])->name('user.status.update');
+
+            Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+            Route::get('customers/edit/{id}', [CustomerController::class, 'edit'])->name('customers.edit');
+            Route::put('customers/update/{id}', [CustomerController::class, 'update'])->name('customers.update');
+            Route::get('customers/show/{id}', [CustomerController::class, 'show'])->name('customers.show');
 
             // Role & Permission Start
             Route::resource('permissions', PermissionController::class);

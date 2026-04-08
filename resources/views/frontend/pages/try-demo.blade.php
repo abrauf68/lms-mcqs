@@ -211,14 +211,14 @@
                             <div class="col-md-12 bg-dark-input">
                                 <label class="form-label text-white text-opacity-50">Full Name <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="name">
+                                <input type="text" class="form-control" name="name" value="{{ Auth::user()->name ?? '' }}">
                             </div>
 
                             <!-- Email -->
                             <div class="col-md-12 bg-dark-input">
                                 <label class="form-label text-white text-opacity-50">Email <span
                                         class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email">
+                                <input type="email" class="form-control" id="email" name="email" value="{{ Auth::user()->email ?? '' }}">
                             </div>
 
                             <!-- Button -->
